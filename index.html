@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plot Potato</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d0a14;color:#f0e8f8;font-family:"DM Sans",system-ui}
+.app{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+.wrap{width:100%;max-width:520px}
+.big{width:100%;padding:14px;border-radius:14px;border:none;background:#ff4f81;color:white;font-weight:900;cursor:pointer;margin-top:12px}
+.sec{background:#1f162a;color:#ff8fab}
+input,textarea{width:100%;padding:12px;border-radius:10px;border:2px solid #2a1d3a;background:#14091e;color:white;margin-bottom:12px}
+h1{font-family:"Dela Gothic One";font-size:64px;text-align:center;color:#ff4f81}
+.center{text-align:center}
+.player{padding:6px;border-bottom:1px solid #2a1d3a}
+.code{font-size:48px;font-family:"Dela Gothic One";letter-spacing:8px;color:#ff4f81;text-align:center}
+.story{background:#1a1028;padding:14px;border-radius:12px;margin-bottom:10px}
+</style>
+</head>
+
+<body>
+<div class="app">
+<div class="wrap" id="app"></div>
+</div>
+
+<script>
+const app = document.getElementById("app")
+
+let state = {
+  view:"title",
+  name:"",
+  emoji:"",
+  room:"",
+  game:null
+}
+
+const emojis = ["🔥","😂","👻","🦊","🍕","🐸","🦝","🧠","🎲","🌈"]
+
+function genCode(){
+  return Math.random().toString(36).substring(2,6).toUpperCase()
+}
+
+function save(code,data){
+  localStorage.setItem("pp-"+code,JSON.stringify(data))
+}
+
+function load(code){
+  let d = localStorage.getItem("pp-"+code)
+  return d ? JSON.parse(d) : null
+}
+
+function render(){
+  if(state.view==="title"){
+    app.innerHTML=`
+      <div class="center">
+        <h1>PLOT<br>POTATO</h1>
+        <button class="big" onclick="goHost()">HOST GAME</button>
+        <button class="big sec" onclick="goJoin()">JOIN GAME</button>
+      </div>
+    `
+  }
+
+  if(state.view==="host"){
+    app.innerHTML=playerForm("Create Room","createRoom()")
+  }
+
+  if(state.view==="join"){
+    app.innerHTML=`
+      <input placeholder="Room Code" maxlength="4" oninput="state.room=this.value.toUpperCase()">
+      ${playerForm("Join Room","joinRoom()")}
+    `
+  }
+
+  if(state.view==="lobby"){
+    let g=state.game
+    app.innerHTML=`
+      <div class="code">${state.room}</div>
+      ${g.players.map(p=>`<div class="player">${p.emoji} ${p.name}</div>`).join("")}
+      <button class="big" onclick="startGame()">START</button>
+    `
+  }
+
+  if(state.view==="write"){
+    app.innerHTML=`
+      <textarea id="text" placeholder="Write the next part..."></textarea>
+      <button class="big" onclick="submit()">PASS POTATO</button>
+    `
+  }
+
+  if(state.view==="reveal"){
+    app.innerHTML=state.game.stories.map(s=>`
+      <div class="story">${s.join(" ")}</div>
+    `).join("") + `<button class="big" onclick="reset()">PLAY AGAIN</button>`
+  }
+}
+
+function playerForm(btn,action){
+  return `
+    <input placeholder="Your name" oninput="state.name=this.value">
+    <div>${emojis.map(e=>`<button onclick="state.emoji='${e}'">${e}</button>`).join("")}</div>
+    <button class="big" onclick="${action}">${btn}</button>
+  `
+}
+
+function goHost(){state.view="host";render()}
+function goJoin(){state.view="join";render()}
+
+function createRoom(){
+  let code=genCode()
+  let game={players:[{name:state.name,emoji:state.emoji}],stories:[]}
+  save(code,game)
+  state.room=code
+  state.game=game
+  state.view="lobby"
+  render()
+}
+
+function joinRoom(){
+  let g=load(state.room)
+  if(!g)return alert("Room not found")
+  g.players.push({name:state.name,emoji:state.emoji})
+  save(state.room,g)
+  state.game=g
+  state.view="lobby"
+  render()
+}
+
+function startGame(){
+  state.game.stories = state.game.players.map(()=>[])
+  save(state.room,state.game)
+  state.view="write"
+  render()
+}
+
+function submit(){
+  let t=document.getElementById("text").value
+  state.game.stories.forEach(s=>s.push(t))
+  save(state.room,state.game)
+  state.view="reveal"
+  render()
+}
+
+function reset(){
+  localStorage.removeItem("pp-"+state.room)
+  state={view:"title",name:"",emoji:"",room:"",game:null}
+  render()
+}
+
+render()
+</script>
+</body>
+</html>
