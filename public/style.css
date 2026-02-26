@@ -158,10 +158,19 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
   text-align: center;
 }
 
-.potato-logo { font-size: 5rem; filter: drop-shadow(0 0 24px rgba(255,45,120,0.5)); animation: float 3s ease-in-out infinite; }
-.potato-logo.small { font-size: 2.5rem; animation-duration: 4s; }
+.potato-logo { font-size: 5rem; filter: drop-shadow(0 0 24px rgba(255,45,120,0.5)); animation: potatoBounce 1.4s cubic-bezier(0.36,0.07,0.19,0.97) infinite; }
+.potato-logo.small { font-size: 2.5rem; animation: float 4s ease-in-out infinite; }
 
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes potatoBounce {
+  0%        { transform: translateY(0) scaleX(1) scaleY(1); }
+  30%       { transform: translateY(-26px) scaleX(0.93) scaleY(1.07); }
+  50%       { transform: translateY(-30px) scaleX(0.92) scaleY(1.08); }
+  65%       { transform: translateY(5px) scaleX(1.14) scaleY(0.86); }
+  78%       { transform: translateY(-10px) scaleX(0.97) scaleY(1.03); }
+  90%       { transform: translateY(2px) scaleX(1.05) scaleY(0.95); }
+  100%      { transform: translateY(0) scaleX(1) scaleY(1); }
+}
 
 .game-title {
   font-family: 'Fredoka', system-ui, sans-serif;
@@ -173,9 +182,46 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 }
 .game-title .pink { color: var(--pink); }
 
-.tagline { color: var(--text-muted); font-size: 1.1rem; }
+.tagline { color: var(--text-muted); font-size: 1.05rem; line-height: 1.5; }
 
 .landing-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-top: 0.5rem; }
+
+/* Join shortcut */
+.join-shortcut {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+.landing-code-input {
+  width: 6rem;
+  text-align: center;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  padding: 0.55rem 0.75rem;
+}
+
+/* How to Play link */
+.btn-htp {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-family: 'Nunito', system-ui, sans-serif;
+}
+.btn-htp:hover { color: var(--text); }
+
+/* How to Play modal */
+.htp-inner { max-width: 480px; }
+.htp-steps { list-style: none; display: flex; flex-direction: column; gap: 1.25rem; margin-top: 0.5rem; }
+.htp-steps li { display: flex; gap: 1rem; align-items: flex-start; }
+.htp-icon { font-size: 1.8rem; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; }
+.htp-steps strong { display: block; font-size: 1rem; margin-bottom: 0.25rem; color: var(--text); }
+.htp-steps p { font-size: 0.9rem; color: var(--text-muted); margin: 0; }
 
 .floating-potatoes {
   position: absolute;

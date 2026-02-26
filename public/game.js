@@ -80,6 +80,29 @@ document.getElementById('btn-join').addEventListener('click', () => showScreen('
 document.getElementById('btn-back-host').addEventListener('click', () => showScreen('screen-landing'));
 document.getElementById('btn-back-join').addEventListener('click', () => showScreen('screen-landing'));
 
+// Quick-join shortcut
+const landingCodeInput = document.getElementById('landing-code');
+landingCodeInput.addEventListener('input', e => {
+  e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+});
+document.getElementById('btn-quick-join').addEventListener('click', () => {
+  const code = landingCodeInput.value.trim().toUpperCase();
+  if (code.length < 4) { landingCodeInput.focus(); return; }
+  document.getElementById('join-code').value = code;
+  showScreen('screen-join-setup');
+});
+landingCodeInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('btn-quick-join').click();
+});
+
+// How to Play modal
+document.getElementById('btn-how-to-play').addEventListener('click', () => {
+  document.getElementById('how-to-play-modal').classList.remove('hidden');
+});
+document.getElementById('btn-close-htp').addEventListener('click', () => {
+  document.getElementById('how-to-play-modal').classList.add('hidden');
+});
+
 // ─── Host Setup ───────────────────────────────────────────────────────────────
 document.getElementById('btn-create-room').addEventListener('click', () => {
   const name = document.getElementById('host-name').value.trim();

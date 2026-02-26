@@ -18,10 +18,41 @@
   <div class="landing-hero">
     <div class="potato-logo">🥔</div>
     <h1 class="game-title">Plot<span class="pink">Potato</span></h1>
-    <p class="tagline">A collaborative story telephone game</p>
+    <p class="tagline">A telephone game — you know the setting and cast,<br>but never what came before</p>
     <div class="landing-buttons">
       <button class="btn btn-primary btn-huge" id="btn-host">Host a Game</button>
       <button class="btn btn-outline btn-huge" id="btn-join">Join a Game</button>
+    </div>
+    <div class="join-shortcut">
+      <input type="text" id="landing-code" maxlength="4" placeholder="Room code" class="code-input landing-code-input" autocomplete="off" />
+      <button class="btn btn-outline" id="btn-quick-join">Join →</button>
+    </div>
+    <button class="btn-htp" id="btn-how-to-play">How to Play?</button>
+  </div>
+
+  <!-- How to Play Modal -->
+  <div id="how-to-play-modal" class="modal hidden">
+    <div class="modal-inner htp-inner">
+      <button class="btn btn-back modal-close" id="btn-close-htp">✕ Close</button>
+      <h2>How to Play</h2>
+      <ol class="htp-steps">
+        <li>
+          <span class="htp-icon">🥔</span>
+          <div><strong>Set the scene</strong><p>Each player creates a setting and cast of characters for their story.</p></div>
+        </li>
+        <li>
+          <span class="htp-icon">✍️</span>
+          <div><strong>Pass it around</strong><p>You'll write a section of someone else's story, seeing only the line written just before yours.</p></div>
+        </li>
+        <li>
+          <span class="htp-icon">🙈</span>
+          <div><strong>Stay in the dark</strong><p>The setting and characters are always shown — but you never see who wrote the previous part, or anything earlier.</p></div>
+        </li>
+        <li>
+          <span class="htp-icon">🎉</span>
+          <div><strong>Big reveal</strong><p>Once all rounds are done, each story is read aloud prompt by prompt. Chaos guaranteed.</p></div>
+        </li>
+      </ol>
     </div>
   </div>
   <div class="floating-potatoes" aria-hidden="true">
