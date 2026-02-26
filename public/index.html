@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plot Potato 🥔</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Landing
+═══════════════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-hero">
+    <div class="potato-logo">🥔</div>
+    <h1 class="game-title">Plot<span class="pink">Potato</span></h1>
+    <p class="tagline">A collaborative story telephone game</p>
+    <div class="landing-buttons">
+      <button class="btn btn-primary btn-huge" id="btn-host">Host a Game</button>
+      <button class="btn btn-outline btn-huge" id="btn-join">Join a Game</button>
+    </div>
+  </div>
+  <div class="floating-potatoes" aria-hidden="true">
+    <span>🥔</span><span>🥔</span><span>🥔</span><span>🥔</span><span>🥔</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Host Setup
+═══════════════════════════════════════════════ -->
+<div id="screen-host-setup" class="screen">
+  <div class="card setup-card">
+    <button class="btn btn-back" id="btn-back-host">← Back</button>
+    <h2>Host a Game</h2>
+    <label>Your name
+      <input type="text" id="host-name" maxlength="20" placeholder="Enter your name" autocomplete="off" />
+    </label>
+    <button class="btn btn-primary" id="btn-create-room">Create Room</button>
+    <p class="error-msg" id="host-error"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Join Setup
+═══════════════════════════════════════════════ -->
+<div id="screen-join-setup" class="screen">
+  <div class="card setup-card">
+    <button class="btn btn-back" id="btn-back-join">← Back</button>
+    <h2>Join a Game</h2>
+    <label>Room code
+      <input type="text" id="join-code" maxlength="4" placeholder="ABCD" autocomplete="off" class="code-input" />
+    </label>
+    <label>Your name
+      <input type="text" id="join-name" maxlength="20" placeholder="Enter your name" autocomplete="off" />
+    </label>
+    <button class="btn btn-primary" id="btn-join-room">Join Room</button>
+    <p class="error-msg" id="join-error"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Lobby
+═══════════════════════════════════════════════ -->
+<div id="screen-lobby" class="screen">
+  <div class="lobby-layout">
+    <!-- Left: Room info + players -->
+    <div class="lobby-left">
+      <div class="room-code-display">
+        <span class="room-code-label">Room Code</span>
+        <span class="room-code" id="lobby-code">----</span>
+        <button class="btn btn-sm" id="btn-copy-code" title="Copy code">Copy</button>
+      </div>
+      <div class="player-list-wrap">
+        <h3>Players <span id="player-count">0</span></h3>
+        <ul id="player-list" class="player-list"></ul>
+      </div>
+    </div>
+
+    <!-- Right: Settings (host only) or waiting message -->
+    <div class="lobby-right">
+      <div id="host-settings" class="settings-panel hidden">
+        <h3>Game Settings</h3>
+
+        <label class="setting-row">
+          <span class="setting-label">Character limit per turn</span>
+          <div class="setting-control">
+            <input type="range" id="setting-charlimit" min="100" max="400" step="10" value="200" />
+            <span id="setting-charlimit-val">200</span>
+          </div>
+        </label>
+
+        <label class="setting-row">
+          <span class="setting-label">Rounds per player</span>
+          <select id="setting-rounds">
+            <option value="auto">Auto (recommended)</option>
+            <option value="1">1 round each</option>
+            <option value="2">2 rounds each</option>
+            <option value="3">3 rounds each</option>
+            <option value="4">4 rounds each</option>
+            <option value="5">5 rounds each</option>
+          </select>
+        </label>
+
+        <label class="setting-row">
+          <span class="setting-label">Writing timer</span>
+          <div class="setting-control toggle-wrap">
+            <label class="toggle">
+              <input type="checkbox" id="setting-timer-enabled" />
+              <span class="toggle-slider"></span>
+            </label>
+            <span id="timer-seconds-wrap" class="hidden">
+              <input type="number" id="setting-timer-seconds" min="30" max="300" value="90" style="width:60px" />s
+            </span>
+          </div>
+        </label>
+
+        <button class="btn btn-primary btn-start" id="btn-start-game">Start Game 🥔</button>
+      </div>
+
+      <div id="player-waiting" class="waiting-msg">
+        <div class="spinner"></div>
+        <p>Waiting for host to start…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Story Creation
+═══════════════════════════════════════════════ -->
+<div id="screen-story-creation" class="screen">
+  <div class="phase-header">
+    <div class="potato-logo small">🥔</div>
+    <h2>Create Your Story</h2>
+    <p class="phase-sub">Set the scene. Everyone else will write in your story!</p>
+  </div>
+  <div class="card writing-card">
+    <label>
+      <span class="field-label">Setting <span class="field-hint">Where does it take place?</span></span>
+      <input type="text" id="anchor-setting" maxlength="80" placeholder="e.g. A submarine deep in the Pacific" autocomplete="off" />
+    </label>
+    <div class="quick-fill-wrap">
+      <span class="quick-label">Quick fill:</span>
+      <div id="setting-presets" class="presets"></div>
+    </div>
+
+    <label style="margin-top:1.2rem">
+      <span class="field-label">Subject(s) <span class="field-hint">Who or what is the story about?</span></span>
+      <input type="text" id="anchor-subjects" maxlength="80" placeholder='e.g. A nervous robot named Chip' autocomplete="off" />
+    </label>
+    <div class="quick-fill-wrap">
+      <span class="quick-label">Quick fill:</span>
+      <div id="subject-presets" class="presets"></div>
+    </div>
+
+    <button class="btn btn-primary" id="btn-submit-anchors">Lock It In 🔒</button>
+    <p id="creation-waiting" class="creation-progress hidden"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Writing
+═══════════════════════════════════════════════ -->
+<div id="screen-writing" class="screen">
+  <div class="phase-header">
+    <div class="round-badge" id="writing-round-badge">Round 1</div>
+    <h2>Add to the Story</h2>
+  </div>
+
+  <div class="anchors-bar" id="writing-anchors">
+    <div class="anchor-item">
+      <span class="anchor-icon">📍</span>
+      <div>
+        <div class="anchor-title">Setting</div>
+        <div class="anchor-value" id="writing-setting">—</div>
+      </div>
+    </div>
+    <div class="anchor-item">
+      <span class="anchor-icon">⭐</span>
+      <div>
+        <div class="anchor-title">Subject(s)</div>
+        <div class="anchor-value" id="writing-subjects">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="writing-previous" class="previous-block hidden">
+    <div class="prev-label">Previously written…</div>
+    <div class="prev-author" id="writing-prev-author"></div>
+    <div class="prev-text" id="writing-prev-text"></div>
+  </div>
+
+  <div id="writing-first-hint" class="first-hint hidden">
+    <span>✨ You're writing the opening of this story!</span>
+  </div>
+
+  <div class="card writing-card">
+    <div class="timer-bar-wrap hidden" id="timer-bar-wrap">
+      <div class="timer-bar" id="timer-bar"></div>
+      <span id="timer-label">1:30</span>
+    </div>
+    <textarea id="writing-textarea" maxlength="400" placeholder="Continue the story…" rows="5"></textarea>
+    <div class="char-count-row">
+      <span id="char-count">0</span> / <span id="char-limit-display">200</span>
+    </div>
+    <button class="btn btn-primary" id="btn-submit-block">Submit ✓</button>
+    <p class="writing-progress" id="writing-progress-label"></p>
+  </div>
+
+  <div id="writing-submitted" class="submitted-waiting hidden">
+    <div class="spinner"></div>
+    <p>Waiting for others…</p>
+    <p id="writing-submitted-count" class="progress-count"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SCREEN: Reveal
+═══════════════════════════════════════════════ -->
+<div id="screen-reveal" class="screen">
+  <div class="phase-header">
+    <div class="potato-logo small">🥔</div>
+    <h2 id="reveal-story-title">Story Time!</h2>
+    <div class="story-nav-info" id="reveal-story-counter"></div>
+  </div>
+
+  <div class="anchors-bar" id="reveal-anchors">
+    <div class="anchor-item">
+      <span class="anchor-icon">📍</span>
+      <div>
+        <div class="anchor-title">Setting</div>
+        <div class="anchor-value" id="reveal-setting">—</div>
+      </div>
+    </div>
+    <div class="anchor-item">
+      <span class="anchor-icon">⭐</span>
+      <div>
+        <div class="anchor-title">Subject(s)</div>
+        <div class="anchor-value" id="reveal-subjects">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="story-scroll" id="reveal-story-blocks"></div>
+
+  <div class="reveal-controls">
+    <button class="btn btn-primary" id="btn-reveal-next" style="display:none">Next ▶</button>
+    <div id="reveal-waiting-msg" class="waiting-reveal-msg">Waiting for host…</div>
+  </div>
+
+  <!-- End of all stories -->
+  <div id="reveal-end" class="reveal-end hidden">
+    <div class="big-emoji">🥔🎉</div>
+    <h2>All stories revealed!</h2>
+    <button class="btn btn-outline" id="btn-full-read">Read All Stories</button>
+    <button class="btn btn-primary hidden" id="btn-play-again">Play Again</button>
+  </div>
+
+  <!-- Full read modal -->
+  <div id="full-read-modal" class="modal hidden">
+    <div class="modal-inner">
+      <button class="btn btn-back modal-close" id="btn-close-modal">✕ Close</button>
+      <h2>All Stories</h2>
+      <div id="full-read-content"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
