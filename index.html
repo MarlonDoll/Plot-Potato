@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Window of Tolerance</title>
+  <style>
+    :root {
+      --hyper: #e05a4e;
+      --hyper-light: #fce8e6;
+      --window: #4caf7d;
+      --window-light: #e8f5ee;
+      --hypo: #5b8fd4;
+      --hypo-light: #e6eff9;
+      --bg: #f7f5f2;
+      --card: #ffffff;
+      --text: #2d2d2d;
+      --muted: #7a7a7a;
+      --border: #e4e0db;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
+    }
+
+    header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header .tagline {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    nav {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0.4rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    nav button.active, nav button:hover {
+      background: var(--window-light);
+      color: var(--window);
+    }
+
+    main {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+    }
+
+    p { color: var(--muted); font-size: 0.92rem; margin-bottom: 0.5rem; }
+
+    /* Zone Visual */
+    .zone-visual {
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 0.5rem 0 1rem;
+      position: relative;
+    }
+
+    .zone-band {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: default;
+      transition: filter 0.2s;
+    }
+
+    .zone-band.hyper { background: var(--hyper-light); border-left: 4px solid var(--hyper); }
+    .zone-band.window { background: var(--window-light); border-left: 4px solid var(--window); }
+    .zone-band.hypo { background: var(--hypo-light); border-left: 4px solid var(--hypo); }
+
+    .zone-band.dimmed { opacity: 0.4; }
+    .zone-band.highlighted { box-shadow: 0 0 0 2px currentColor inset; }
+
+    .zone-band .zone-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .zone-band .zone-desc {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .zone-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .zone-band.hyper .zone-badge { background: var(--hyper); color: #fff; }
+    .zone-band.window .zone-badge { background: var(--window); color: #fff; }
+    .zone-band.hypo .zone-badge { background: var(--hypo); color: #fff; }
+
+    /* Slider */
+    .slider-wrap {
+      margin: 1rem 0;
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 5px;
+      outline: none;
+      cursor: pointer;
+      background: linear-gradient(to bottom,
+        var(--hyper) 0%, var(--hyper) 16.6%,
+        #e8b96e 16.6%, #e8b96e 33.3%,
+        var(--window) 33.3%, var(--window) 66.6%,
+        #6ab8c8 66.6%, #6ab8c8 83.3%,
+        var(--hypo) 83.3%, var(--hypo) 100%
+      );
+      background: linear-gradient(to right,
+        var(--hypo), #6ab8c8, var(--window), #e8b96e, var(--hyper)
+      );
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: white;
+      border: 3px solid #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: transform 0.1s;
+    }
+
+    input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+
+    .slider-value {
+      text-align: center;
+      margin-top: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .slider-value.hyper { background: var(--hyper-light); color: var(--hyper); }
+    .slider-value.window { background: var(--window-light); color: var(--window); }
+    .slider-value.hypo { background: var(--hypo-light); color: var(--hypo); }
+
+    /* Symptom checklist */
+    .symptom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .symptom-btn {
+      border: 1.5px solid var(--border);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      color: var(--text);
+      font-family: inherit;
+    }
+
+    .symptom-btn:hover { border-color: #aaa; }
+    .symptom-btn.selected.hyper { background: var(--hyper-light); border-color: var(--hyper); color: var(--hyper); font-weight: 600; }
+    .symptom-btn.selected.window { background: var(--window-light); border-color: var(--window); color: var(--window); font-weight: 600; }
+    .symptom-btn.selected.hypo { background: var(--hypo-light); border-color: var(--hypo); color: var(--hypo); font-weight: 600; }
+
+    /* Strategies */
+    .strategy-list { list-style: none; }
+    .strategy-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+    .strategy-list li:last-child { border-bottom: none; }
+
+    .strategy-icon {
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      width: 2rem;
+      text-align: center;
+    }
+
+    .strategy-title { font-weight: 600; color: var(--text); }
+    .strategy-desc { font-size: 0.8rem; color: var(--muted); margin-top: 1px; }
+
+    /* Breathing */
+    .breath-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 0;
+    }
+
+    .breath-circle-outer {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: var(--window-light);
+      border: 3px solid var(--window);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 1.5rem;
+      transition: transform 0.1s;
+    }
+
+    .breath-circle-inner {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: var(--window);
+      opacity: 0.7;
+      transition: all 1s ease-in-out;
+    }
+
+    .breath-label {
+      position: absolute;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--window);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .breath-instruction {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      min-height: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .breath-timer {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--window);
+      min-height: 2.5rem;
+      text-align: center;
+    }
+
+    .breath-select {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .breath-select button {
+      padding: 0.4rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      background: white;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .breath-select button.active {
+      background: var(--window);
+      border-color: var(--window);
+      color: white;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.65rem 1.4rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--window);
+      color: white;
+    }
+
+    .btn-primary:hover { background: #3d9768; transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-secondary {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover { background: #d8d4cf; }
+
+    .btn-danger {
+      background: #fce8e6;
+      color: var(--hyper);
+    }
+
+    .btn-danger:hover { background: #f9d5d2; }
+
+    /* Log */
+    .log-entry {
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.88rem;
+    }
+
+    .log-entry .log-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .log-dot.hyper { background: var(--hyper); }
+    .log-dot.window { background: var(--window); }
+    .log-dot.hypo { background: var(--hypo); }
+
+    .log-meta { color: var(--muted); font-size: 0.78rem; }
+    .log-note { margin-top: 2px; }
+
+    .log-zone-label {
+      margin-left: auto;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+
+    .log-zone-label.hyper { background: var(--hyper-light); color: var(--hyper); }
+    .log-zone-label.window { background: var(--window-light); color: var(--window); }
+    .log-zone-label.hypo { background: var(--hypo-light); color: var(--hypo); }
+
+    .note-input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0.65rem 0.9rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: none;
+      outline: none;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      transition: border-color 0.2s;
+    }
+
+    .note-input:focus { border-color: var(--window); }
+
+    /* Learn */
+    .info-block {
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-block.hyper { background: var(--hyper-light); border-left: 4px solid var(--hyper); }
+    .info-block.window { background: var(--window-light); border-left: 4px solid var(--window); }
+    .info-block.hypo { background: var(--hypo-light); border-left: 4px solid var(--hypo); }
+
+    .info-block h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .info-block p { font-size: 0.85rem; color: var(--text); opacity: 0.85; margin: 0; }
+
+    .info-block ul {
+      margin: 0.5rem 0 0 1.1rem;
+      font-size: 0.85rem;
+      color: var(--text);
+      opacity: 0.85;
+    }
+
+    .info-block ul li { margin-bottom: 0.2rem; }
+
+    /* Quote */
+    .quote-card {
+      background: linear-gradient(135deg, #667eea22, #764ba222);
+      border: 1px solid #764ba233;
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .quote-card p {
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    .quote-card .quote-author {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      font-style: normal;
+      font-weight: 600;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--muted);
+    }
+
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+    .empty-state p { font-size: 0.9rem; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      nav { overflow-x: auto; width: 100%; }
+      .symptom-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Animations */
+    @keyframes breatheIn {
+      from { transform: scale(1); opacity: 0.7; }
+      to { transform: scale(1.8); opacity: 1; }
+    }
+
+    @keyframes breatheOut {
+      from { transform: scale(1.8); opacity: 1; }
+      to { transform: scale(1); opacity: 0.7; }
+    }
+
+    @keyframes breatheHold {
+      from, to { transform: scale(1.8); opacity: 1; }
+    }
+
+    @keyframes breatheHoldEmpty {
+      from, to { transform: scale(1); opacity: 0.7; }
+    }
+
+    .animating-in .breath-circle-inner { animation: breatheIn var(--dur, 4s) ease-in-out forwards; }
+    .animating-hold .breath-circle-inner { animation: breatheHold var(--dur, 4s) ease-in-out forwards; }
+    .animating-out .breath-circle-inner { animation: breatheOut var(--dur, 4s) ease-in-out forwards; }
+    .animating-hold-empty .breath-circle-inner { animation: breatheHoldEmpty var(--dur, 4s) ease-in-out forwards; }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Window of Tolerance</h1>
+    <div class="tagline">Self-regulation awareness tool</div>
+  </div>
+  <nav>
+    <button class="active" onclick="showPage('check-in')">Check In</button>
+    <button onclick="showPage('breathe')">Breathe</button>
+    <button onclick="showPage('log')">Log</button>
+    <button onclick="showPage('learn')">Learn</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- CHECK-IN PAGE -->
+  <div class="page active" id="page-check-in">
+
+    <div class="card fade-in">
+      <div class="card-title">Where are you right now?</div>
+      <h2 id="slider-zone-title">Finding your zone...</h2>
+      <p id="slider-zone-desc">Move the slider to where you feel right now.</p>
+
+      <div class="slider-wrap">
+        <div class="slider-labels">
+          <span>Shut down</span>
+          <span>In the window</span>
+          <span>Overwhelmed</span>
+        </div>
+        <input type="range" id="zone-slider" min="0" max="100" value="50"
+               oninput="onSliderChange(this.value)" />
+        <div class="slider-value window" id="slider-label">In the Window</div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">Recognising your zone</div>
+      <div class="zone-visual" id="zone-visual">
+        <div class="zone-band hyper" id="band-hyper">
+          <div>
+            <div class="zone-name" style="color: var(--hyper)">Hyperarousal</div>
+            <div class="zone-desc">Fight / Flight activated</div>
+          </div>
+          <span class="zone-badge">Too activated</span>
+        </div>
+        <div class="zone-band window highlighted" id="band-window">
+          <div>
+            <div class="zone-name" style="color: var(--window)">Window of Tolerance</div>
+            <div class="zone-desc">Optimal zone for learning & connecting</div>
+          </div>
+          <span class="zone-badge">You are here</span>
+        </div>
+        <div class="zone-band hypo" id="band-hypo">
+          <div>
+            <div class="zone-name" style="color: var(--hypo)">Hypoarousal</div>
+            <div class="zone-desc">Freeze / Shutdown activated</div>
+          </div>
+          <span class="zone-badge">Too deactivated</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">What are you noticing?</div>
+      <p>Select any symptoms you're experiencing.</p>
+      <div class="symptom-grid" id="symptom-grid"></div>
+    </div>
+
+    <div class="card fade-in" id="strategies-card">
+      <div class="card-title">Regulation strategies</div>
+      <h2 id="strategies-title">You're doing well</h2>
+      <p id="strategies-intro"></p>
+      <ul class="strategy-list" id="strategies-list"></ul>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">Log this check-in</div>
+      <textarea class="note-input" id="checkin-note" rows="2"
+                placeholder="Optional note about how you're feeling..."></textarea>
+      <button class="btn btn-primary" onclick="saveCheckin()">Save check-in</button>
+    </div>
+
+  </div>
+
+  <!-- BREATHE PAGE -->
+  <div class="page" id="page-breathe">
+    <div class="card fade-in">
+      <div class="card-title">Breathing exercise</div>
+      <h2>Regulate your nervous system</h2>
+      <p>Conscious breathing is one of the fastest ways to shift your arousal state. Choose a technique below.</p>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">Choose technique</div>
+      <div class="breath-select" id="breath-select">
+        <button class="active" onclick="selectBreath('box')" data-key="box">Box Breathing</button>
+        <button onclick="selectBreath('478')" data-key="478">4-7-8</button>
+        <button onclick="selectBreath('coherent')" data-key="coherent">Coherent (5-5)</button>
+        <button onclick="selectBreath('physiological')" data-key="physiological">Physiological Sigh</button>
+      </div>
+      <p id="breath-description" style="font-size:0.85rem;"></p>
+    </div>
+
+    <div class="card fade-in">
+      <div class="breath-wrap">
+        <div class="breath-circle-outer" id="breath-circle-outer">
+          <div class="breath-circle-inner" id="breath-circle"></div>
+          <div class="breath-label" id="breath-phase-label"></div>
+        </div>
+        <div class="breath-instruction" id="breath-instruction">Press start to begin</div>
+        <div class="breath-timer" id="breath-timer"></div>
+      </div>
+      <div style="display:flex; gap: 0.75rem; justify-content: center; margin-top: 0.5rem;">
+        <button class="btn btn-primary" id="breath-start-btn" onclick="toggleBreath()">Start</button>
+        <button class="btn btn-secondary" onclick="resetBreath()">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG PAGE -->
+  <div class="page" id="page-log">
+    <div class="card fade-in">
+      <div class="card-title">Your check-in log</div>
+      <h2>Track your patterns</h2>
+      <p>Noticing patterns in your arousal helps you understand your triggers and build self-awareness.</p>
+    </div>
+
+    <div id="log-list"></div>
+
+    <div style="text-align:right; margin-top: 0.5rem;" id="clear-btn-wrap"></div>
+  </div>
+
+  <!-- LEARN PAGE -->
+  <div class="page" id="page-learn">
+
+    <div class="quote-card fade-in">
+      <p>"The window of tolerance is the zone of optimal arousal — not too much, not too little. It is where we live our fullest lives."</p>
+      <div class="quote-author">— Dr Dan Siegel</div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">What is the Window of Tolerance?</div>
+      <h2>Your nervous system has zones</h2>
+      <p>Developed by psychiatrist Dr Dan Siegel, the Window of Tolerance describes the optimal zone where your nervous system is regulated — you can think clearly, feel your emotions, connect with others, and respond (rather than react) to life.</p>
+      <p>When stress or trauma pushes you outside this window, your automatic survival responses take over. Understanding which zone you're in is the first step to self-regulation.</p>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">The three zones</div>
+
+      <div class="info-block hyper">
+        <h3>Hyperarousal — Fight or Flight</h3>
+        <p>Your sympathetic nervous system is highly activated. The brain perceives threat and mobilises energy.</p>
+        <ul>
+          <li>Anxiety, panic, racing heart</li>
+          <li>Anger, irritability, rage</li>
+          <li>Racing or intrusive thoughts</li>
+          <li>Hypervigilance — scanning for danger</li>
+          <li>Overwhelm, feeling out of control</li>
+          <li>Physical tension, trembling</li>
+        </ul>
+      </div>
+
+      <div class="info-block window">
+        <h3>Window of Tolerance — Optimal Zone</h3>
+        <p>Your nervous system is regulated. You have access to your full emotional and cognitive range.</p>
+        <ul>
+          <li>Calm, grounded, present</li>
+          <li>Curious, engaged, open</li>
+          <li>Able to feel and process emotions</li>
+          <li>Connected to self and others</li>
+          <li>Flexible thinking, good problem-solving</li>
+        </ul>
+      </div>
+
+      <div class="info-block hypo">
+        <h3>Hypoarousal — Freeze or Collapse</h3>
+        <p>Your parasympathetic nervous system has shut things down. The brain conserves energy in the face of perceived helplessness.</p>
+        <ul>
+          <li>Numbness, emptiness, disconnection</li>
+          <li>Fatigue, heaviness, inability to move</li>
+          <li>Brain fog, difficulty thinking</li>
+          <li>Dissociation — feeling unreal</li>
+          <li>Depression, hopelessness</li>
+          <li>Feeling invisible or absent</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">Growing your window</div>
+      <h2>The window can expand</h2>
+      <p>Through therapy, consistent self-regulation practice, and safe relationships, your window of tolerance can widen over time. This means you can handle more stress without being pushed outside your zone.</p>
+      <p style="margin-top:0.75rem; font-weight:600; font-size:0.85rem; color:var(--text)">Key practices that grow the window:</p>
+      <ul style="margin:0.5rem 0 0 1.1rem; font-size:0.85rem; color:var(--muted)">
+        <li>Regular mindfulness and body awareness</li>
+        <li>Somatic (body-based) therapy or movement</li>
+        <li>Safe social connection and co-regulation</li>
+        <li>Consistent sleep, nutrition and exercise</li>
+        <li>Trauma-informed therapy (EMDR, SE, IFS, etc.)</li>
+        <li>Gentle titration — gradually approaching difficult feelings</li>
+      </ul>
+    </div>
+
+    <div class="card fade-in">
+      <div class="card-title">How to use this app</div>
+      <h2>Building awareness daily</h2>
+      <ul style="margin: 0.5rem 0 0 1.1rem; font-size:0.88rem; color:var(--muted); line-height:1.8">
+        <li><strong>Check In</strong> — Use the slider to locate yourself and read personalised strategies</li>
+        <li><strong>Breathe</strong> — Use breathing exercises to shift your state</li>
+        <li><strong>Log</strong> — Save check-ins to spot patterns over time</li>
+        <li><strong>Learn</strong> — Deepen your understanding of this model</li>
+      </ul>
+      <p style="margin-top:1rem; font-size:0.8rem; color:var(--muted)"><strong>Note:</strong> This app is a psychoeducational tool. It is not a replacement for professional mental health support. If you are struggling, please reach out to a counsellor or therapist.</p>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+// ─── Data ───────────────────────────────────────────────────────────────────
+
+const ZONES = {
+  hypo: {
+    label: 'Hypoarousal',
+    color: 'hypo',
+    slug: 'hypo',
+    title: 'You may be in hypoarousal',
+    desc: 'Your nervous system appears to be in a collapsed or shutdown state. This is a protective freeze response. You need gentle activation.',
+    symptoms: [
+      'Feeling numb or empty', 'Heavy or sluggish body', 'Brain fog',
+      'Hard to feel anything', 'Disconnected or unreal', 'Withdrawn, invisible',
+      'Very low energy', 'Hard to make decisions', 'Feeling hopeless',
+      'Wanting to sleep or hide'
+    ],
+    strategies: [
+      { icon: '🚶', title: 'Gentle movement', desc: 'A short walk, stretching, or gentle bouncing. Movement wakes the nervous system slowly.' },
+      { icon: '💧', title: 'Cold water on face', desc: 'Splash cold water on your face or hold an ice cube. This stimulates the vagus nerve.' },
+      { icon: '🎵', title: 'Upbeat rhythm', desc: 'Put on music with a clear beat and let your body move even slightly with it.' },
+      { icon: '👁️', title: 'Engage your senses', desc: 'Notice 5 things you can see. Touch a textured surface. Smell something strong. Bring yourself into the room.' },
+      { icon: '🗣️', title: 'Reach out', desc: 'Contact someone safe — even a text. Social engagement activates the social nervous system.' },
+      { icon: '🌬️', title: 'Activating breath', desc: 'Try a slightly longer inhale than exhale (e.g. in for 5, out for 3) to gently increase activation.' }
+    ]
+  },
+  window: {
+    label: 'Window of Tolerance',
+    color: 'window',
+    slug: 'window',
+    title: 'You\'re in your window',
+    desc: 'You\'re in a regulated state — able to think, feel, and respond flexibly. This is the optimal zone. Maintain it.',
+    symptoms: [
+      'Feeling calm', 'Present and grounded', 'Able to think clearly',
+      'Emotionally balanced', 'Connected to body', 'Curious or engaged',
+      'Able to problem-solve', 'Comfortable with feelings', 'Rested', 'Open to others'
+    ],
+    strategies: [
+      { icon: '🌱', title: 'Stay present', desc: 'Notice and appreciate this regulated state. Savour it — this builds neural pathways for regulation.' },
+      { icon: '📓', title: 'Reflect', desc: 'A great time to journal, process difficult feelings, or do deeper emotional work.' },
+      { icon: '🤝', title: 'Connect', desc: 'Use this window to reach out to people you care about. Regulated connection deepens relationships.' },
+      { icon: '🧘', title: 'Mindfulness', desc: 'Practice mindfulness now to anchor your nervous system. This makes your window more resilient.' },
+      { icon: '📊', title: 'Notice what got you here', desc: 'What helped you feel regulated? Rest? Exercise? Connection? Note it for your toolkit.' },
+      { icon: '✅', title: 'Take on what matters', desc: 'This is the best time to tackle important tasks, conversations, and decisions.' }
+    ]
+  },
+  hyper: {
+    label: 'Hyperarousal',
+    color: 'hyper',
+    slug: 'hyper',
+    title: 'You may be in hyperarousal',
+    desc: 'Your nervous system appears activated into fight-or-flight. Your body is responding to perceived threat. You need to slow down and discharge the activation.',
+    symptoms: [
+      'Feeling anxious or panicky', 'Racing heart', 'Anger or irritability',
+      'Racing thoughts', 'Can\'t stop scanning / worrying', 'Overwhelmed',
+      'Tense muscles', 'Hard to sit still', 'Easily startled', 'Feeling unsafe'
+    ],
+    strategies: [
+      { icon: '📦', title: 'Box breathing', desc: 'Inhale 4s, hold 4s, exhale 4s, hold 4s. Use the Breathe tab. Activates the parasympathetic system.' },
+      { icon: '🖐️', title: '5-4-3-2-1 grounding', desc: 'Name 5 things you see, 4 you feel, 3 you hear, 2 you smell, 1 you taste. Anchor to the present.' },
+      { icon: '❄️', title: 'Cold water or ice', desc: 'Cold water on the face or wrists triggers the dive reflex and slows your heart rate rapidly.' },
+      { icon: '🏃', title: 'Discharge the energy', desc: 'Go for a brisk walk or do jumping jacks. Your body mobilised energy — use it physically.' },
+      { icon: '🦁', title: 'Tension and release', desc: 'Tense each muscle group hard for 5 seconds, then fully release. Repeat from feet to shoulders.' },
+      { icon: '😮‍💨', title: 'Extended exhale', desc: 'Exhale twice as long as you inhale (e.g. in for 4, out for 8). This directly stimulates the vagus nerve.' }
+    ]
+  }
+};
+
+// Slider thresholds: 0–30 = hypo, 31–69 = window, 70–100 = hyper
+function getZoneKey(val) {
+  val = parseInt(val);
+  if (val <= 30) return 'hypo';
+  if (val >= 70) return 'hyper';
+  return 'window';
+}
+
+function getZoneLabel(val) {
+  val = parseInt(val);
+  if (val <= 10) return 'Deep shutdown';
+  if (val <= 20) return 'Collapsing';
+  if (val <= 30) return 'Hypoarousal';
+  if (val <= 40) return 'Slightly low';
+  if (val <= 60) return 'In the Window';
+  if (val <= 70) return 'Slightly elevated';
+  if (val <= 80) return 'Hyperarousal';
+  if (val <= 90) return 'Highly activated';
+  return 'Overwhelmed';
+}
+
+let currentZoneKey = 'window';
+let selectedSymptoms = new Set();
+
+// ─── Slider ─────────────────────────────────────────────────────────────────
+
+function onSliderChange(val) {
+  const key = getZoneKey(val);
+  const zone = ZONES[key];
+  const label = getZoneLabel(val);
+
+  document.getElementById('slider-zone-title').textContent = zone.title;
+  document.getElementById('slider-zone-desc').textContent = zone.desc;
+
+  const labelEl = document.getElementById('slider-label');
+  labelEl.className = 'slider-value ' + zone.color;
+  labelEl.textContent = label;
+
+  // Update bands
+  ['hypo', 'window', 'hyper'].forEach(z => {
+    const band = document.getElementById('band-' + z);
+    band.className = 'zone-band ' + z + (z === key ? ' highlighted' : ' dimmed');
+    // Update badge text
+    const badge = band.querySelector('.zone-badge');
+    badge.textContent = z === key ? 'You are here' : ZONES[z].label.split(' ')[0];
+  });
+
+  if (key !== currentZoneKey) {
+    currentZoneKey = key;
+    selectedSymptoms.clear();
+    renderSymptoms();
+    renderStrategies();
+  }
+}
+
+// ─── Symptoms ────────────────────────────────────────────────────────────────
+
+function renderSymptoms() {
+  const grid = document.getElementById('symptom-grid');
+  const zone = ZONES[currentZoneKey];
+  grid.innerHTML = zone.symptoms.map((s, i) => `
+    <button class="symptom-btn ${selectedSymptoms.has(i) ? 'selected ' + zone.color : ''}"
+            onclick="toggleSymptom(${i}, this)">
+      ${s}
+    </button>
+  `).join('');
+}
+
+function toggleSymptom(idx, el) {
+  const zone = ZONES[currentZoneKey];
+  if (selectedSymptoms.has(idx)) {
+    selectedSymptoms.delete(idx);
+    el.className = 'symptom-btn';
+  } else {
+    selectedSymptoms.add(idx);
+    el.className = 'symptom-btn selected ' + zone.color;
+  }
+}
+
+// ─── Strategies ─────────────────────────────────────────────────────────────
+
+function renderStrategies() {
+  const zone = ZONES[currentZoneKey];
+  document.getElementById('strategies-title').textContent =
+    currentZoneKey === 'window' ? 'Maintain your regulation' :
+    currentZoneKey === 'hyper' ? 'Come back down' : 'Gently activate';
+
+  document.getElementById('strategies-intro').textContent = zone.desc;
+
+  document.getElementById('strategies-list').innerHTML = zone.strategies.map(s => `
+    <li>
+      <span class="strategy-icon">${s.icon}</span>
+      <div>
+        <div class="strategy-title">${s.title}</div>
+        <div class="strategy-desc">${s.desc}</div>
+      </div>
+    </li>
+  `).join('');
+}
+
+// ─── Log ────────────────────────────────────────────────────────────────────
+
+function getLog() {
+  try { return JSON.parse(localStorage.getItem('wot_log') || '[]'); } catch { return []; }
+}
+
+function saveLog(entries) {
+  localStorage.setItem('wot_log', JSON.stringify(entries));
+}
+
+function saveCheckin() {
+  const note = document.getElementById('checkin-note').value.trim();
+  const sliderVal = document.getElementById('zone-slider').value;
+  const key = getZoneKey(sliderVal);
+  const label = getZoneLabel(sliderVal);
+  const zone = ZONES[key];
+  const symptoms = Array.from(selectedSymptoms).map(i => zone.symptoms[i]);
+
+  const entry = {
+    ts: Date.now(),
+    zone: key,
+    label,
+    note,
+    symptoms,
+    sliderVal: parseInt(sliderVal)
+  };
+
+  const log = getLog();
+  log.unshift(entry);
+  saveLog(log.slice(0, 100)); // keep last 100
+
+  document.getElementById('checkin-note').value = '';
+
+  // Flash feedback
+  const btn = document.querySelector('.btn-primary');
+  const orig = btn.textContent;
+  btn.textContent = 'Saved!';
+  btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+}
+
+function renderLog() {
+  const log = getLog();
+  const list = document.getElementById('log-list');
+  const clearWrap = document.getElementById('clear-btn-wrap');
+
+  if (log.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>No check-ins yet.<br>Use the Check In tab to log how you're feeling.</p>
+      </div>`;
+    clearWrap.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = log.map(e => {
+    const d = new Date(e.ts);
+    const dateStr = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+    const timeStr = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+    const symptomsHtml = e.symptoms && e.symptoms.length
+      ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:3px">${e.symptoms.join(' · ')}</div>` : '';
+    return `
+      <div class="log-entry fade-in">
+        <div class="log-dot ${e.zone}"></div>
+        <div style="flex:1; min-width:0">
+          <div class="log-meta">${dateStr} at ${timeStr}</div>
+          ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+          ${symptomsHtml}
+        </div>
+        <span class="log-zone-label ${e.zone}">${e.label || ZONES[e.zone].label}</span>
+      </div>`;
+  }).join('');
+
+  clearWrap.innerHTML = `<button class="btn btn-danger" onclick="clearLog()">Clear all</button>`;
+}
+
+function clearLog() {
+  if (confirm('Clear all check-ins? This cannot be undone.')) {
+    saveLog([]);
+    renderLog();
+  }
+}
+
+// ─── Breathing ──────────────────────────────────────────────────────────────
+
+const BREATH_PATTERNS = {
+  box: {
+    name: 'Box Breathing',
+    desc: 'Equal in, hold, out, hold. Used by Navy SEALs to calm under pressure. Ideal for hyperarousal.',
+    phases: [
+      { label: 'Inhale', dur: 4, anim: 'animating-in' },
+      { label: 'Hold', dur: 4, anim: 'animating-hold' },
+      { label: 'Exhale', dur: 4, anim: 'animating-out' },
+      { label: 'Hold', dur: 4, anim: 'animating-hold-empty' }
+    ]
+  },
+  '478': {
+    name: '4-7-8 Breathing',
+    desc: 'Longer exhale activates the parasympathetic system deeply. Dr Andrew Weil\'s calming technique.',
+    phases: [
+      { label: 'Inhale', dur: 4, anim: 'animating-in' },
+      { label: 'Hold', dur: 7, anim: 'animating-hold' },
+      { label: 'Exhale', dur: 8, anim: 'animating-out' }
+    ]
+  },
+  coherent: {
+    name: 'Coherent Breathing',
+    desc: '5 seconds in, 5 out. Six breaths per minute — the rate that maximises heart rate variability and calm.',
+    phases: [
+      { label: 'Inhale', dur: 5, anim: 'animating-in' },
+      { label: 'Exhale', dur: 5, anim: 'animating-out' }
+    ]
+  },
+  physiological: {
+    name: 'Physiological Sigh',
+    desc: 'Double inhale through nose then long exhale. The fastest way to offload CO₂ and calm anxiety.',
+    phases: [
+      { label: 'Inhale', dur: 2, anim: 'animating-in' },
+      { label: 'Inhale +', dur: 1, anim: 'animating-hold' },
+      { label: 'Long exhale', dur: 6, anim: 'animating-out' }
+    ]
+  }
+};
+
+let currentBreath = 'box';
+let breathRunning = false;
+let breathPhaseIdx = 0;
+let breathCountdown = 0;
+let breathTimer = null;
+
+function selectBreath(key) {
+  if (breathRunning) resetBreath();
+  currentBreath = key;
+  document.querySelectorAll('#breath-select button').forEach(b => {
+    b.className = b.dataset.key === key ? 'active' : '';
+  });
+  document.getElementById('breath-description').textContent = BREATH_PATTERNS[key].desc;
+  document.getElementById('breath-instruction').textContent = 'Press start to begin';
+  document.getElementById('breath-timer').textContent = '';
+  setBreathCircleAnim(null, 1);
+}
+
+function setBreathCircleAnim(animClass, dur) {
+  const outer = document.getElementById('breath-circle-outer');
+  outer.className = 'breath-circle-outer';
+  if (animClass) {
+    outer.style.setProperty('--dur', dur + 's');
+    void outer.offsetWidth; // reflow
+    outer.classList.add(animClass);
+  }
+}
+
+function toggleBreath() {
+  if (breathRunning) {
+    pauseBreath();
+  } else {
+    startBreath();
+  }
+}
+
+function startBreath() {
+  breathRunning = true;
+  document.getElementById('breath-start-btn').textContent = 'Pause';
+  runBreathPhase();
+}
+
+function pauseBreath() {
+  breathRunning = false;
+  clearTimeout(breathTimer);
+  document.getElementById('breath-start-btn').textContent = 'Resume';
+}
+
+function resetBreath() {
+  clearTimeout(breathTimer);
+  breathRunning = false;
+  breathPhaseIdx = 0;
+  breathCountdown = 0;
+  document.getElementById('breath-start-btn').textContent = 'Start';
+  document.getElementById('breath-instruction').textContent = 'Press start to begin';
+  document.getElementById('breath-timer').textContent = '';
+  document.getElementById('breath-phase-label').textContent = '';
+  setBreathCircleAnim(null, 1);
+}
+
+function runBreathPhase() {
+  if (!breathRunning) return;
+  const pattern = BREATH_PATTERNS[currentBreath];
+  const phase = pattern.phases[breathPhaseIdx];
+  breathCountdown = phase.dur;
+
+  document.getElementById('breath-instruction').textContent = phase.label;
+  document.getElementById('breath-phase-label').textContent = phase.label;
+  setBreathCircleAnim(phase.anim, phase.dur);
+  tick();
+}
+
+function tick() {
+  if (!breathRunning) return;
+  document.getElementById('breath-timer').textContent = breathCountdown > 0 ? breathCountdown : '';
+  if (breathCountdown <= 0) {
+    // next phase
+    const pattern = BREATH_PATTERNS[currentBreath];
+    breathPhaseIdx = (breathPhaseIdx + 1) % pattern.phases.length;
+    breathTimer = setTimeout(runBreathPhase, 200);
+    return;
+  }
+  breathCountdown--;
+  breathTimer = setTimeout(tick, 1000);
+}
+
+// ─── Navigation ─────────────────────────────────────────────────────────────
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+
+  document.getElementById('page-' + name).classList.add('active');
+  const btn = [...document.querySelectorAll('nav button')].find(b =>
+    b.textContent.toLowerCase().replace(' ', '-').includes(name.split('-')[0]));
+  if (btn) btn.classList.add('active');
+
+  if (name === 'log') renderLog();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+
+function init() {
+  renderSymptoms();
+  renderStrategies();
+  selectBreath('box');
+
+  // set initial slider state
+  onSliderChange(document.getElementById('zone-slider').value);
+}
+
+init();
+</script>
+</body>
+</html>
