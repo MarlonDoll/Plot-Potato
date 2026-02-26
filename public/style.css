@@ -732,17 +732,15 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 .timer-bar-wrap.low { animation: timerPulse 0.6s ease-in-out infinite alternate; }
 @keyframes timerPulse { from { opacity: 1; } to { opacity: 0.55; } }
 
-/* ─── REVEAL ANCHORS SLIDE-IN ─────────────── */
-#reveal-anchors {
+/* ─── REVEAL ANCHORS SEQUENTIAL REVEAL ───── */
+#reveal-anchors .anchor-item {
   opacity: 0;
-  transform: translateY(-10px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
-  pointer-events: none;
+  transform: translateY(-10px) scale(0.94);
+  transition: opacity 0.45s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
-#reveal-anchors.anchors-visible {
+#reveal-anchors .anchor-item.anchor-visible {
   opacity: 1;
   transform: none;
-  pointer-events: auto;
 }
 
 /* ─── BLOCK AUTHOR FADE-IN ────────────────── */

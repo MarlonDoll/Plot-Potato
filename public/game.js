@@ -403,6 +403,13 @@ function clearTimer() {
 }
 
 // ─── Reveal Phase ─────────────────────────────────────────────────────────────
+function resetRevealAnchors() {
+  document.getElementById('reveal-setting').textContent = '—';
+  document.getElementById('reveal-subjects').textContent = '—';
+  document.getElementById('reveal-anchor-setting').classList.remove('anchor-visible');
+  document.getElementById('reveal-anchor-subjects').classList.remove('anchor-visible');
+}
+
 function initReveal(data) {
   state.revealedBlocks = [];
   document.getElementById('reveal-story-blocks').innerHTML = '';
@@ -415,18 +422,14 @@ function initReveal(data) {
 
   document.getElementById('reveal-story-counter').textContent = `Story 1 of ${data.totalStories}`;
 
-  // Hide anchors bar — will animate in once we have the story data
-  const anchorsBar = document.getElementById('reveal-anchors');
-  anchorsBar.classList.remove('anchors-visible');
-
   if (data.firstStory) {
     document.getElementById('reveal-story-title').textContent = `${data.firstStory.authorName}'s Story`;
-    document.getElementById('reveal-setting').textContent = data.firstStory.anchors.setting;
-    document.getElementById('reveal-subjects').textContent = data.firstStory.anchors.subjects;
-    setTimeout(() => anchorsBar.classList.add('anchors-visible'), 350);
   } else {
     document.getElementById('reveal-story-title').textContent = 'Story Time!';
   }
+
+  // Both anchor items start hidden — revealed one click at a time
+  resetRevealAnchors();
 
   updateRevealControls();
   showScreen('screen-reveal');
@@ -434,16 +437,12 @@ function initReveal(data) {
 }
 
 function onRevealNewStory(data) {
-  const { storyIndex, totalStories, anchors, authorName } = data;
+  const { storyIndex, totalStories, authorName } = data;
   document.getElementById('reveal-story-counter').textContent = `Story ${storyIndex + 1} of ${totalStories}`;
   document.getElementById('reveal-story-title').textContent = `${authorName}'s Story`;
-  document.getElementById('reveal-setting').textContent = anchors.setting;
-  document.getElementById('reveal-subjects').textContent = anchors.subjects;
 
-  // Re-animate anchors in for the new story
-  const anchorsBar = document.getElementById('reveal-anchors');
-  anchorsBar.classList.remove('anchors-visible');
-  setTimeout(() => anchorsBar.classList.add('anchors-visible'), 50);
+  // Reset anchor items — Setting and Subjects will appear one click at a time
+  resetRevealAnchors();
 
   document.getElementById('reveal-story-blocks').innerHTML = '';
   Sounds.fanfare();
@@ -872,6 +871,15 @@ socket.on('phase:reveal:start', (data) => {
 
 socket.on('reveal:newStory', (data) => {
   onRevealNewStory(data);
+});
+
+socket.on('reveal:anchor', ({ type, value }) => {
+  const elId   = type === 'setting' ? 'reveal-setting'        : 'reveal-subjects';
+  const cardId = type === 'setting' ? 'reveal-anchor-setting' : 'reveal-anchor-subjects';
+  document.getElementById(elId).textContent = value;
+  // Small delay so the text sets before the transition fires
+  setTimeout(() => document.getElementById(cardId).classList.add('anchor-visible'), 30);
+  Sounds.pop();
 });
 
 socket.on('reveal:block', (data) => {

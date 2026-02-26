@@ -39,7 +39,8 @@ function createRoom(hostName, hostId) {
     totalRounds: 0,
     revealState: {
       storyIndex: 0,
-      blockIndex: 0,
+      blockIndex: -1,
+      stage: 'setting',   // 'setting' | 'subjects' | 'blocks'
     },
     storyCreationSubmissions: new Set(),
     writingSubmissions: new Set(),
@@ -224,13 +225,16 @@ io.on('connection', (socket) => {
     if (!sender) return;
 
     // Credit the reaction to the author of the currently-shown block
+    // (self-reactions don't count)
     const { storyIndex, blockIndex } = room.revealState;
     if (blockIndex >= 0) {
       const story = room.stories[storyIndex];
       if (story && story.blocks[blockIndex]) {
         const authorId = story.blocks[blockIndex].authorId;
-        if (!room.reactionCounts[authorId]) room.reactionCounts[authorId] = {};
-        room.reactionCounts[authorId][emoji] = (room.reactionCounts[authorId][emoji] || 0) + 1;
+        if (authorId !== socket.id) {
+          if (!room.reactionCounts[authorId]) room.reactionCounts[authorId] = {};
+          room.reactionCounts[authorId][emoji] = (room.reactionCounts[authorId][emoji] || 0) + 1;
+        }
       }
     }
 
@@ -255,7 +259,7 @@ io.on('connection', (socket) => {
     room.totalRounds = 0;
     room.storyCreationSubmissions = new Set();
     room.writingSubmissions = new Set();
-    room.revealState = { storyIndex: 0, blockIndex: 0 };
+    room.revealState = { storyIndex: 0, blockIndex: -1, stage: 'setting' };
     room.reactionCounts = {};
     io.to(room.code).emit('phase:lobby', safeRoomInfo(room));
   });
@@ -336,26 +340,45 @@ function startWritingRound(room) {
 
 function startReveal(room) {
   room.phase = 'reveal';
-  room.revealState = { storyIndex: 0, blockIndex: -1 };
+  room.revealState = { storyIndex: 0, blockIndex: -1, stage: 'setting' };
   const first = room.stories[0];
   io.to(room.code).emit('phase:reveal:start', {
     room: safeRoomInfo(room),
     totalStories: room.stories.length,
-    firstStory: first ? { anchors: first.anchors, authorName: first.authorName } : null,
+    firstStory: first ? { authorName: first.authorName } : null,
   });
-  advanceReveal(room);
+  // Host controls the pace from here — no auto-advance
 }
 
 function advanceReveal(room) {
-  const { storyIndex, blockIndex } = room.revealState;
+  const { storyIndex, blockIndex, stage } = room.revealState;
   const story = room.stories[storyIndex];
-
   if (!story) return;
 
+  // Stage 1: reveal the setting
+  if (stage === 'setting') {
+    room.revealState.stage = 'subjects';
+    io.to(room.code).emit('reveal:anchor', {
+      type: 'setting',
+      value: story.anchors.setting,
+    });
+    return;
+  }
+
+  // Stage 2: reveal the subjects
+  if (stage === 'subjects') {
+    room.revealState.stage = 'blocks';
+    io.to(room.code).emit('reveal:anchor', {
+      type: 'subjects',
+      value: story.anchors.subjects,
+    });
+    return;
+  }
+
+  // Stage 3+: reveal blocks one by one
   const nextBlockIndex = blockIndex + 1;
 
   if (nextBlockIndex <= story.blocks.length - 1) {
-    // Reveal next block of current story
     room.revealState.blockIndex = nextBlockIndex;
     io.to(room.code).emit('reveal:block', {
       storyIndex,
@@ -363,22 +386,18 @@ function advanceReveal(room) {
       totalBlocks: story.blocks.length,
       isLastBlock: nextBlockIndex === story.blocks.length - 1,
       block: story.blocks[nextBlockIndex],
-      anchors: story.anchors,
-      authorName: story.authorName,
     });
   } else {
-    // Move to next story or end
+    // All blocks done — move to next story or end
     const nextStoryIndex = storyIndex + 1;
     if (nextStoryIndex < room.stories.length) {
-      room.revealState = { storyIndex: nextStoryIndex, blockIndex: -1 };
+      room.revealState = { storyIndex: nextStoryIndex, blockIndex: -1, stage: 'setting' };
       io.to(room.code).emit('reveal:newStory', {
         storyIndex: nextStoryIndex,
         totalStories: room.stories.length,
-        anchors: room.stories[nextStoryIndex].anchors,
         authorName: room.stories[nextStoryIndex].authorName,
       });
-      // Immediately reveal first block
-      advanceReveal(room);
+      // Host clicks Next to reveal setting of the new story
     } else {
       io.to(room.code).emit('reveal:end', {
         stories: room.stories.map(s => ({
