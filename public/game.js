@@ -62,8 +62,6 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
-  if (id === 'screen-landing') Sounds.stopMusic();
-  else if (id === 'screen-lobby') Sounds.startMusic();
 }
 
 function showError(elId, msg) {
