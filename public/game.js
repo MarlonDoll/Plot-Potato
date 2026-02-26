@@ -328,7 +328,9 @@ function onRevealNewStory(data) {
   document.getElementById('reveal-story-title').textContent = `${authorName}'s Story`;
   document.getElementById('reveal-setting').textContent = anchors.setting;
   document.getElementById('reveal-subjects').textContent = anchors.subjects;
-  document.getElementById('reveal-story-blocks').innerHTML = '';
+  const blocksEl = document.getElementById('reveal-story-blocks');
+  blocksEl.innerHTML = '';
+  blocksEl.classList.remove('authors-revealed');
 }
 
 function onRevealBlock(data) {
@@ -345,6 +347,7 @@ function onRevealBlock(data) {
 }
 
 function onRevealEnd(data) {
+  document.getElementById('reveal-story-blocks').classList.add('authors-revealed');
   document.getElementById('reveal-end').classList.remove('hidden');
   document.getElementById('btn-reveal-next').style.display = 'none';
   document.getElementById('reveal-waiting-msg').style.display = 'none';
