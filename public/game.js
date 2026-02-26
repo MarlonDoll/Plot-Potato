@@ -221,6 +221,18 @@ function renderLobby(room) {
 }
 
 // ─── Story Creation ───────────────────────────────────────────────────────────
+function submitAnchorsAuto() {
+  const settingEl = document.getElementById('anchor-setting');
+  const subjectsEl = document.getElementById('anchor-subjects');
+  if (!settingEl.value.trim()) {
+    settingEl.value = SETTING_PRESETS[Math.floor(Math.random() * SETTING_PRESETS.length)];
+  }
+  if (!subjectsEl.value.trim()) {
+    subjectsEl.value = SUBJECT_PRESETS[Math.floor(Math.random() * SUBJECT_PRESETS.length)];
+  }
+  document.getElementById('btn-submit-anchors').click();
+}
+
 function initStoryCreation() {
   renderPresets('setting-presets', SETTING_PRESETS, 'anchor-setting');
   renderPresets('subject-presets', SUBJECT_PRESETS, 'anchor-subjects');
@@ -230,6 +242,14 @@ function initStoryCreation() {
   document.getElementById('btn-submit-anchors').disabled = false;
   document.getElementById('creation-waiting').classList.add('hidden');
   document.getElementById('creation-waiting').textContent = '';
+
+  clearTimer();
+  const settings = state.room && state.room.settings;
+  if (settings && settings.timerEnabled) {
+    startTimer(settings.timerSeconds, 'creation-timer-bar-wrap', 'creation-timer-bar', 'creation-timer-label', submitAnchorsAuto);
+  } else {
+    document.getElementById('creation-timer-bar-wrap').classList.add('hidden');
+  }
 
   showScreen('screen-story-creation');
 }
@@ -255,6 +275,7 @@ document.getElementById('btn-submit-anchors').addEventListener('click', () => {
   if (!setting) return alert('Please enter a setting.');
   if (!subjects) return alert('Please enter subject(s).');
 
+  clearTimer();
   document.getElementById('btn-submit-anchors').disabled = true;
   document.getElementById('creation-waiting').classList.remove('hidden');
   document.getElementById('creation-waiting').textContent = 'Waiting for others…';
@@ -298,7 +319,7 @@ function initWriting(data) {
   // Timer
   clearTimer();
   if (room.settings.timerEnabled) {
-    startTimer(room.settings.timerSeconds);
+    startTimer(room.settings.timerSeconds, 'timer-bar-wrap', 'timer-bar', 'timer-label', submitBlock);
   } else {
     document.getElementById('timer-bar-wrap').classList.add('hidden');
   }
@@ -335,10 +356,10 @@ function submitBlock() {
   socket.emit('player:submitBlock', { code: state.roomCode, text });
 }
 
-function startTimer(seconds) {
-  const barWrap = document.getElementById('timer-bar-wrap');
-  const bar = document.getElementById('timer-bar');
-  const label = document.getElementById('timer-label');
+function startTimer(seconds, wrapId, barId, labelId, onTimeout) {
+  const barWrap = document.getElementById(wrapId);
+  const bar = document.getElementById(barId);
+  const label = document.getElementById(labelId);
   barWrap.classList.remove('hidden');
   state.timerSecondsLeft = seconds;
 
@@ -350,7 +371,7 @@ function startTimer(seconds) {
     label.textContent = `${m}:${String(s).padStart(2, '0')}`;
     if (state.timerSecondsLeft <= 0) {
       clearTimer();
-      submitBlock();
+      onTimeout();
       return;
     }
     if (state.timerSecondsLeft <= 10) Sounds.tick();
