@@ -283,7 +283,7 @@ function startWritingRound(room) {
   const assignments = room.players.map((player, playerIndex) => {
     const storyIndex = getAssignedStoryIndex(playerIndex, room.currentRound, room.players.length);
     const story = room.stories[storyIndex];
-    const previousBlock = story.blocks.length > 0 ? story.blocks[story.blocks.length - 1] : null;
+    const previousBlock = [...story.blocks].reverse().find(b => b.text !== '…') ?? null;
     return {
       playerId: player.id,
       storyIndex,
