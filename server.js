@@ -326,6 +326,7 @@ function advanceReveal(room) {
     io.to(room.code).emit('reveal:block', {
       storyIndex,
       blockIndex: nextBlockIndex,
+      totalBlocks: story.blocks.length,
       isLastBlock: nextBlockIndex === story.blocks.length - 1,
       block: story.blocks[nextBlockIndex],
       anchors: story.anchors,

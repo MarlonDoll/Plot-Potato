@@ -466,7 +466,9 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 
 @keyframes blockReveal { from { opacity:0; transform:translateY(16px) scale(0.98); } to { opacity:1; transform:none; } }
 
-.block-author { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--pink-light); margin-bottom: 0.5rem; opacity: 0; transition: opacity 0.6s ease; }
+.block-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+.block-prompt-number { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+.block-author { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--pink-light); opacity: 0; transition: opacity 0.6s ease; }
 .authors-revealed .block-author { opacity: 1; }
 .block-text { font-size: 1.05rem; line-height: 1.7; color: var(--text); }
 

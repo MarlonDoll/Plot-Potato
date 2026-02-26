@@ -251,7 +251,7 @@ function initWriting(data) {
   } else {
     firstHint.classList.add('hidden');
     prevBlock.classList.remove('hidden');
-    document.getElementById('writing-prev-author').textContent = `Written by ${assignment.previousBlock.authorName}`;
+    document.getElementById('writing-prev-author').textContent = '';
     document.getElementById('writing-prev-text').textContent = assignment.previousBlock.text;
   }
 
@@ -362,12 +362,15 @@ function onRevealNewStory(data) {
 }
 
 function onRevealBlock(data) {
-  const { block, blockIndex } = data;
+  const { block, blockIndex, totalBlocks } = data;
   const container = document.getElementById('reveal-story-blocks');
   const el = document.createElement('div');
   el.className = `story-block${blockIndex === 0 ? ' first-block' : ''}`;
   el.innerHTML = `
-    <div class="block-author">${escHtml(block.authorName)}</div>
+    <div class="block-header">
+      <span class="block-prompt-number">Prompt ${blockIndex + 1}/${totalBlocks}</span>
+      <span class="block-author">${escHtml(block.authorName)}</span>
+    </div>
     <div class="block-text">${escHtml(block.text)}</div>
   `;
   container.appendChild(el);
