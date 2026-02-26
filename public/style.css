@@ -575,6 +575,64 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ─── POTATO PASS OVERLAY ─────────────────── */
+.potato-pass-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.potato-pass-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.pass-potato {
+  font-size: 7rem;
+  display: inline-block;
+  line-height: 1;
+}
+.pass-label {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+  opacity: 0.85;
+}
+@keyframes potatoFly {
+  0%   { transform: translateX(-140%) rotate(-25deg) scale(0.6); opacity: 0; }
+  18%  { opacity: 1; }
+  45%  { transform: translateX(0)     rotate(  0deg) scale(1.15); }
+  55%  { transform: translateX(0)     rotate(  5deg) scale(1.12); }
+  82%  { opacity: 1; }
+  100% { transform: translateX(140%)  rotate( 25deg) scale(0.6); opacity: 0; }
+}
+
+/* ─── CONFETTI CANVAS ─────────────────────── */
+#confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 600;
+  display: none;
+}
+
+/* ─── TIMER LOW-TIME STATE ────────────────── */
+.timer-bar-wrap.low .timer-bar::after { background: #FF6B6B; }
+.timer-bar-wrap.low { animation: timerPulse 0.6s ease-in-out infinite alternate; }
+@keyframes timerPulse { from { opacity: 1; } to { opacity: 0.55; } }
+
+/* ─── BLOCK AUTHOR FADE-IN ────────────────── */
+.block-author-reveal { animation: fadeIn 0.5s ease; }
+
 /* ─── Utilities ───────────────────────────── */
 .hidden { display: none !important; }
 

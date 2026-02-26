@@ -14,6 +14,7 @@ const state = {
   timerInterval: null,
   timerSecondsLeft: 0,
   revealedBlocks: [],          // for tracking full reveal
+  typewriting: false,          // true while a block is being typewritten
 };
 
 // ─── Quick Fill Presets ───────────────────────────────────────────────────────
@@ -383,7 +384,9 @@ function startTimer(seconds, wrapId, barId, labelId, onTimeout) {
     const m = Math.floor(state.timerSecondsLeft / 60);
     const s = state.timerSecondsLeft % 60;
     label.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    barWrap.classList.toggle('low', state.timerSecondsLeft <= 10 && state.timerSecondsLeft > 0);
     if (state.timerSecondsLeft <= 0) {
+      barWrap.classList.remove('low');
       clearTimer();
       onTimeout();
       return;
@@ -437,16 +440,29 @@ function onRevealBlock(data) {
   el.innerHTML = `
     <div class="block-header">
       <span class="block-prompt-number">Prompt ${blockIndex + 1}/${totalBlocks}</span>
-      <span class="block-author">${escHtml(block.authorName)}</span>
+      <span class="block-author"></span>
     </div>
-    <div class="block-text">${escHtml(block.text)}</div>
+    <div class="block-text"></div>
   `;
   container.appendChild(el);
   el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  // Disable host's Next button while typing
+  const nextBtn = document.getElementById('btn-reveal-next');
+  if (state.isHost) nextBtn.disabled = true;
+
+  typewriteBlock(
+    el.querySelector('.block-text'),
+    el.querySelector('.block-author'),
+    block.text,
+    block.authorName,
+    () => { if (state.isHost) nextBtn.disabled = false; }
+  );
 }
 
 function onRevealEnd(data) {
   Sounds.win();
+  launchConfetti();
   document.getElementById('reveal-end').classList.remove('hidden');
   document.getElementById('btn-reveal-next').style.display = 'none';
   document.getElementById('reveal-waiting-msg').style.display = 'none';
@@ -503,6 +519,112 @@ document.getElementById('btn-full-read').addEventListener('click', () => {
 document.getElementById('btn-close-modal').addEventListener('click', () => {
   document.getElementById('full-read-modal').classList.add('hidden');
 });
+
+// ─── Potato Pass Overlay ──────────────────────────────────────────────────────
+function showPotatoPass(callback) {
+  const overlay = document.getElementById('potato-pass-overlay');
+  const potato  = document.getElementById('pass-potato-emoji');
+
+  overlay.classList.add('active');
+
+  // Force-restart the CSS animation each time
+  potato.style.animation = 'none';
+  potato.getBoundingClientRect(); // reflow
+  potato.style.animation = 'potatoFly 1.3s ease-in-out forwards';
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    setTimeout(callback, 260); // wait for fade-out before showing writing screen
+  }, 1500);
+}
+
+// ─── Typewriter Effect ────────────────────────────────────────────────────────
+// ~100 chars/sec — fast talker pace
+const TYPEWRITER_MS = 10;
+
+function typewriteBlock(textEl, authorEl, text, authorName, onDone) {
+  let i = 0;
+  state.typewriting = true;
+
+  function next() {
+    if (i < text.length) {
+      textEl.textContent = text.slice(0, ++i);
+      setTimeout(next, TYPEWRITER_MS);
+    } else {
+      // Reveal author with a little fade
+      authorEl.textContent = authorName;
+      authorEl.classList.add('block-author-reveal');
+      state.typewriting = false;
+      if (onDone) onDone();
+    }
+  }
+  next();
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.style.display = 'block';
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+
+  const COLORS = ['#FF2D78', '#FFD600', '#9333EA', '#FF6FA8', '#ffffff', '#FF6B6B', '#4ADE80'];
+  const particles = Array.from({ length: 170 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -(Math.random() * canvas.height * 0.6 + 20),
+    r: Math.random() * 6 + 3,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    vx: (Math.random() - 0.5) * 4,
+    vy: Math.random() * 3 + 2,
+    angle: Math.random() * 360,
+    spin: (Math.random() - 0.5) * 9,
+    wobble: Math.random() * Math.PI * 2,
+    shape: Math.random() > 0.4 ? 'rect' : 'circle',
+  }));
+
+  const DURATION = 4200;
+  const startTime = performance.now();
+  let raf;
+
+  function draw(now) {
+    const elapsed = now - startTime;
+    // Fade out during last 30 %
+    const alpha = Math.min(1, Math.max(0, 1 - (elapsed - DURATION * 0.7) / (DURATION * 0.3)));
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const p of particles) {
+      p.x += p.vx + Math.sin(p.wobble) * 0.6;
+      p.y += p.vy;
+      p.vy += 0.06;          // gravity
+      p.angle += p.spin;
+      p.wobble += 0.05;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      if (p.shape === 'rect') {
+        ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+      } else {
+        ctx.beginPath();
+        ctx.arc(0, 0, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    if (elapsed < DURATION) {
+      raf = requestAnimationFrame(draw);
+    } else {
+      canvas.style.display = 'none';
+      cancelAnimationFrame(raf);
+    }
+  }
+
+  raf = requestAnimationFrame(draw);
+}
 
 // ─── Socket Events ────────────────────────────────────────────────────────────
 socket.on('room:joined', ({ room, playerId, isHost }) => {
@@ -562,7 +684,11 @@ socket.on('creation:progress', ({ submitted, total }) => {
 
 socket.on('phase:writing', (data) => {
   state.room = data.room;
-  initWriting(data);
+  if (data.room.currentRound > 0) {
+    showPotatoPass(() => initWriting(data));
+  } else {
+    initWriting(data);
+  }
 });
 
 socket.on('writing:progress', ({ submitted, total }) => {

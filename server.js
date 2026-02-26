@@ -31,8 +31,8 @@ function createRoom(hostName, hostId) {
     settings: {
       charLimit: 200,
       roundsPerPlayer: 'auto', // 'auto' | number
-      timerEnabled: false,
-      timerSeconds: 90,
+      timerEnabled: true,
+      timerSeconds: 45,
     },
     stories: [],             // { authorId, anchors:{setting,subjects}, blocks:[{authorId,authorName,text}] }
     currentRound: 0,
@@ -170,8 +170,8 @@ io.on('connection', (socket) => {
       total: room.players.length,
     });
 
-    // If all players submitted anchors, start round 1
-    if (room.storyCreationSubmissions.size === room.players.length) {
+    // If all current players submitted anchors, start round 1
+    if (room.players.every(p => room.storyCreationSubmissions.has(p.id))) {
       startWritingRound(room);
     }
   });
@@ -201,7 +201,7 @@ io.on('connection', (socket) => {
       total: room.players.length,
     });
 
-    if (room.writingSubmissions.size === room.players.length) {
+    if (room.players.every(p => room.writingSubmissions.has(p.id))) {
       room.currentRound++;
       if (room.currentRound >= room.totalRounds) {
         startReveal(room);
@@ -256,11 +256,15 @@ io.on('connection', (socket) => {
 
       io.to(code).emit('room:updated', safeRoomInfo(room));
 
-      // If in writing phase and disconnected player was the last needed, advance
-      if (room.phase === 'writing' && !room.writingSubmissions.has(socket.id)) {
-        // Add a placeholder so the count can match
+      // If a phase is waiting on all players, check if remaining players are now all done
+      if (room.phase === 'story-creation') {
+        if (room.players.length > 0 && room.players.every(p => room.storyCreationSubmissions.has(p.id))) {
+          startWritingRound(room);
+        }
+      } else if (room.phase === 'writing') {
+        // Ensure disconnected player's slot is filled so round can complete
         room.writingSubmissions.add(socket.id);
-        if (room.writingSubmissions.size >= room.players.length + 1) {
+        if (room.players.length > 0 && room.players.every(p => room.writingSubmissions.has(p.id))) {
           room.currentRound++;
           if (room.currentRound >= room.totalRounds) {
             startReveal(room);
