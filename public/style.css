@@ -630,6 +630,19 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 .timer-bar-wrap.low { animation: timerPulse 0.6s ease-in-out infinite alternate; }
 @keyframes timerPulse { from { opacity: 1; } to { opacity: 0.55; } }
 
+/* ─── REVEAL ANCHORS SLIDE-IN ─────────────── */
+#reveal-anchors {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+#reveal-anchors.anchors-visible {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
 /* ─── BLOCK AUTHOR FADE-IN ────────────────── */
 .block-author-reveal { animation: fadeIn 0.5s ease; }
 

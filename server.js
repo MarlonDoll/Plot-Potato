@@ -309,9 +309,11 @@ function startWritingRound(room) {
 function startReveal(room) {
   room.phase = 'reveal';
   room.revealState = { storyIndex: 0, blockIndex: -1 };
+  const first = room.stories[0];
   io.to(room.code).emit('phase:reveal:start', {
     room: safeRoomInfo(room),
     totalStories: room.stories.length,
+    firstStory: first ? { anchors: first.anchors, authorName: first.authorName } : null,
   });
   advanceReveal(room);
 }

@@ -409,11 +409,20 @@ function initReveal(data) {
   document.getElementById('reveal-end').classList.add('hidden');
   document.getElementById('full-read-modal').classList.add('hidden');
 
-  const counter = document.getElementById('reveal-story-counter');
-  counter.textContent = `Story 1 of ${data.totalStories}`;
-  document.getElementById('reveal-story-title').textContent = 'Story Time!';
-  document.getElementById('reveal-setting').textContent = '…';
-  document.getElementById('reveal-subjects').textContent = '…';
+  document.getElementById('reveal-story-counter').textContent = `Story 1 of ${data.totalStories}`;
+
+  // Hide anchors bar — will animate in once we have the story data
+  const anchorsBar = document.getElementById('reveal-anchors');
+  anchorsBar.classList.remove('anchors-visible');
+
+  if (data.firstStory) {
+    document.getElementById('reveal-story-title').textContent = `${data.firstStory.authorName}'s Story`;
+    document.getElementById('reveal-setting').textContent = data.firstStory.anchors.setting;
+    document.getElementById('reveal-subjects').textContent = data.firstStory.anchors.subjects;
+    setTimeout(() => anchorsBar.classList.add('anchors-visible'), 350);
+  } else {
+    document.getElementById('reveal-story-title').textContent = 'Story Time!';
+  }
 
   updateRevealControls();
   showScreen('screen-reveal');
@@ -426,8 +435,13 @@ function onRevealNewStory(data) {
   document.getElementById('reveal-story-title').textContent = `${authorName}'s Story`;
   document.getElementById('reveal-setting').textContent = anchors.setting;
   document.getElementById('reveal-subjects').textContent = anchors.subjects;
-  const blocksEl = document.getElementById('reveal-story-blocks');
-  blocksEl.innerHTML = '';
+
+  // Re-animate anchors in for the new story
+  const anchorsBar = document.getElementById('reveal-anchors');
+  anchorsBar.classList.remove('anchors-visible');
+  setTimeout(() => anchorsBar.classList.add('anchors-visible'), 50);
+
+  document.getElementById('reveal-story-blocks').innerHTML = '';
   Sounds.fanfare();
 }
 
