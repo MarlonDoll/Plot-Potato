@@ -62,6 +62,8 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   const el = document.getElementById(id);
   if (el) el.classList.add('active');
+  if (id === 'screen-landing') Sounds.stopMusic();
+  else if (id === 'screen-lobby') Sounds.startMusic();
 }
 
 function showError(elId, msg) {
@@ -102,6 +104,12 @@ document.getElementById('btn-how-to-play').addEventListener('click', () => {
 document.getElementById('btn-close-htp').addEventListener('click', () => {
   document.getElementById('how-to-play-modal').classList.add('hidden');
 });
+
+// Sound toggle
+document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+  Sounds.setEnabled(!Sounds.isEnabled());
+});
+Sounds.updateToggleUI();
 
 // ─── Host Setup ───────────────────────────────────────────────────────────────
 document.getElementById('btn-create-room').addEventListener('click', () => {
@@ -319,6 +327,7 @@ writingTextarea.addEventListener('keydown', e => {
 function submitBlock() {
   const text = writingTextarea.value.trim();
   if (!text) return alert('Write something first!');
+  Sounds.submit();
   document.getElementById('btn-submit-block').disabled = true;
   writingTextarea.disabled = true;
   clearTimer();
@@ -346,6 +355,7 @@ function startTimer(seconds) {
       submitBlock();
       return;
     }
+    if (state.timerSecondsLeft <= 10) Sounds.tick();
     state.timerSecondsLeft--;
   }
   tick();
@@ -371,6 +381,7 @@ function initReveal(data) {
 
   updateRevealControls();
   showScreen('screen-reveal');
+  Sounds.fanfare();
 }
 
 function onRevealNewStory(data) {
@@ -381,10 +392,11 @@ function onRevealNewStory(data) {
   document.getElementById('reveal-subjects').textContent = anchors.subjects;
   const blocksEl = document.getElementById('reveal-story-blocks');
   blocksEl.innerHTML = '';
-  blocksEl.classList.remove('authors-revealed');
+  Sounds.fanfare();
 }
 
 function onRevealBlock(data) {
+  Sounds.pop();
   const { block, blockIndex, totalBlocks } = data;
   const container = document.getElementById('reveal-story-blocks');
   const el = document.createElement('div');
@@ -401,7 +413,7 @@ function onRevealBlock(data) {
 }
 
 function onRevealEnd(data) {
-  document.getElementById('reveal-story-blocks').classList.add('authors-revealed');
+  Sounds.win();
   document.getElementById('reveal-end').classList.remove('hidden');
   document.getElementById('btn-reveal-next').style.display = 'none';
   document.getElementById('reveal-waiting-msg').style.display = 'none';
