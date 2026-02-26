@@ -109,11 +109,21 @@ document.getElementById('btn-sound-toggle').addEventListener('click', () => {
 });
 Sounds.updateToggleUI();
 
+// ─── Name persistence ─────────────────────────────────────────────────────────
+const savedName = localStorage.getItem('pp_name') || '';
+document.getElementById('host-name').value = savedName;
+document.getElementById('join-name').value = savedName;
+
+function saveName(name) {
+  localStorage.setItem('pp_name', name);
+}
+
 // ─── Host Setup ───────────────────────────────────────────────────────────────
 document.getElementById('btn-create-room').addEventListener('click', () => {
   const name = document.getElementById('host-name').value.trim();
   if (!name) return showError('host-error', 'Please enter your name.');
   clearError('host-error');
+  saveName(name);
   socket.emit('host:create', { name });
 });
 
@@ -128,6 +138,7 @@ document.getElementById('btn-join-room').addEventListener('click', () => {
   if (!code || code.length < 4) return showError('join-error', 'Enter a 4-character room code.');
   if (!name) return showError('join-error', 'Please enter your name.');
   clearError('join-error');
+  saveName(name);
   socket.emit('player:join', { code, name });
 });
 
@@ -319,7 +330,10 @@ function initWriting(data) {
   // Timer
   clearTimer();
   if (room.settings.timerEnabled) {
-    startTimer(room.settings.timerSeconds, 'timer-bar-wrap', 'timer-bar', 'timer-label', submitBlock);
+    startTimer(room.settings.timerSeconds, 'timer-bar-wrap', 'timer-bar', 'timer-label', () => {
+      if (!writingTextarea.value.trim()) writingTextarea.value = '…';
+      submitBlock();
+    });
   } else {
     document.getElementById('timer-bar-wrap').classList.add('hidden');
   }
