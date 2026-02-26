@@ -298,8 +298,14 @@
   <div id="reveal-end" class="reveal-end hidden">
     <div class="big-emoji">🥔🎉</div>
     <h2>All stories revealed!</h2>
-    <button class="btn btn-outline" id="btn-full-read">Read All Stories</button>
-    <button class="btn btn-primary hidden" id="btn-play-again">Play Again</button>
+    <div class="reveal-end-buttons">
+      <button class="btn btn-outline" id="btn-full-read">Read All Stories</button>
+      <button class="btn btn-primary hidden" id="btn-play-again">Play Again</button>
+    </div>
+    <div id="awards-section" class="awards-section hidden">
+      <h3 class="awards-heading">🏅 Awards</h3>
+      <div id="awards-grid" class="awards-grid"></div>
+    </div>
   </div>
 
   <!-- Full read modal -->
@@ -311,6 +317,20 @@
     </div>
   </div>
 </div>
+
+<!-- Emoji reaction bar (visible during reveal) -->
+<div id="reaction-bar" class="reaction-bar hidden" aria-label="React to the story">
+  <button class="reaction-btn" data-emoji="😂" title="Funny">😂</button>
+  <button class="reaction-btn" data-emoji="🔥" title="Fire">🔥</button>
+  <button class="reaction-btn" data-emoji="😱" title="Shocking">😱</button>
+  <button class="reaction-btn" data-emoji="❤️" title="Love it">❤️</button>
+  <button class="reaction-btn" data-emoji="💀" title="Dead">💀</button>
+  <button class="reaction-btn" data-emoji="😢" title="Cry">😢</button>
+  <button class="reaction-btn" data-emoji="🙈" title="Can't look">🙈</button>
+</div>
+
+<!-- Floating reaction emojis container -->
+<div id="floating-reactions" aria-hidden="true"></div>
 
 <!-- Potato pass transition overlay -->
 <div id="potato-pass-overlay" class="potato-pass-overlay" aria-hidden="true">

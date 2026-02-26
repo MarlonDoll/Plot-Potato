@@ -773,6 +773,139 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
 .sound-toggle:hover { background: var(--surface2); }
 .sound-toggle:active { transform: scale(0.92); }
 
+/* ─── REACTION BAR ────────────────────────── */
+.reaction-bar {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(0);
+  display: flex;
+  gap: 4px;
+  padding: 8px 14px;
+  background: rgba(12, 2, 28, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 60px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 120;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.reaction-bar.hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateX(-50%) translateY(16px) !important;
+}
+.reaction-btn {
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px 7px;
+  border-radius: 50%;
+  transition: transform 0.14s ease, background 0.14s ease;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reaction-btn:hover {
+  transform: scale(1.45);
+  background: rgba(255, 255, 255, 0.1);
+}
+.reaction-btn:active {
+  transform: scale(1.05);
+}
+
+/* ─── FLOATING REACTIONS ──────────────────── */
+#floating-reactions {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 130;
+}
+.floating-emoji {
+  position: fixed;
+  font-size: 2.4rem;
+  line-height: 1;
+  pointer-events: none;
+  animation: floatUp 1.9s ease-out forwards;
+}
+@keyframes floatUp {
+  0%   { opacity: 0; transform: translateY(0) scale(0.4); }
+  14%  { opacity: 1; transform: translateY(-24px) scale(1.2); }
+  65%  { opacity: 1; transform: translateY(-160px) scale(1); }
+  100% { opacity: 0; transform: translateY(-270px) scale(0.75); }
+}
+
+/* ─── AWARDS ──────────────────────────────── */
+.reveal-end-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.awards-section {
+  width: 100%;
+  max-width: 700px;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+.awards-heading {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(120deg, #FFD600, #FF6FA8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.awards-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.award-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 14px 18px;
+  min-width: 130px;
+  max-width: 170px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(18px) scale(0.88);
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.award-card.visible {
+  opacity: 1;
+  transform: none;
+}
+.award-emoji {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 5px;
+  line-height: 1;
+}
+.award-title {
+  font-family: 'Fredoka', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #FFD600;
+  display: block;
+  margin-bottom: 2px;
+}
+.award-player {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  display: block;
+  margin-top: 3px;
+}
+
 /* Responsive tweaks */
 @media (max-width: 500px) {
   .card { padding: 1.25rem; }
@@ -780,4 +913,6 @@ input[type="range"] { padding: 0; background: none; border: none; accent-color: 
   .anchors-bar { flex-direction: column; }
   .room-code { font-size: 1.8rem; }
   h2 { font-size: 1.5rem; }
+  .reaction-btn { font-size: 1.3rem; padding: 4px 5px; }
+  .award-card { min-width: 110px; max-width: 140px; padding: 10px 12px; }
 }

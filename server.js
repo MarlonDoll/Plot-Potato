@@ -43,6 +43,7 @@ function createRoom(hostName, hostId) {
     },
     storyCreationSubmissions: new Set(),
     writingSubmissions: new Set(),
+    reactionCounts: {},      // { playerId: { '😂': N, ... } }
   };
   return rooms[code];
 }
@@ -211,6 +212,32 @@ io.on('connection', (socket) => {
     }
   });
 
+  // PLAYER: emoji reaction during reveal
+  socket.on('player:react', ({ code, emoji }) => {
+    const room = getRoom(code);
+    if (!room || room.phase !== 'reveal') return;
+
+    const VALID_EMOJIS = new Set(['😂', '🔥', '😱', '❤️', '💀', '😢', '🙈']);
+    if (!VALID_EMOJIS.has(emoji)) return;
+
+    const sender = room.players.find(p => p.id === socket.id);
+    if (!sender) return;
+
+    // Credit the reaction to the author of the currently-shown block
+    const { storyIndex, blockIndex } = room.revealState;
+    if (blockIndex >= 0) {
+      const story = room.stories[storyIndex];
+      if (story && story.blocks[blockIndex]) {
+        const authorId = story.blocks[blockIndex].authorId;
+        if (!room.reactionCounts[authorId]) room.reactionCounts[authorId] = {};
+        room.reactionCounts[authorId][emoji] = (room.reactionCounts[authorId][emoji] || 0) + 1;
+      }
+    }
+
+    // Broadcast floating emoji to all players in room
+    io.to(room.code).emit('reaction:broadcast', { emoji, fromName: sender.name });
+  });
+
   // HOST: advance reveal
   socket.on('host:revealNext', ({ code }) => {
     const room = getRoom(code);
@@ -229,6 +256,7 @@ io.on('connection', (socket) => {
     room.storyCreationSubmissions = new Set();
     room.writingSubmissions = new Set();
     room.revealState = { storyIndex: 0, blockIndex: 0 };
+    room.reactionCounts = {};
     io.to(room.code).emit('phase:lobby', safeRoomInfo(room));
   });
 
@@ -358,6 +386,8 @@ function advanceReveal(room) {
           anchors: s.anchors,
           blocks: s.blocks,
         })),
+        reactionCounts: room.reactionCounts,
+        players: room.players.map(p => ({ id: p.id, name: p.name })),
       });
     }
   }

@@ -407,7 +407,11 @@ function initReveal(data) {
   state.revealedBlocks = [];
   document.getElementById('reveal-story-blocks').innerHTML = '';
   document.getElementById('reveal-end').classList.add('hidden');
+  document.getElementById('awards-section').classList.add('hidden');
   document.getElementById('full-read-modal').classList.add('hidden');
+
+  // Show reaction bar
+  document.getElementById('reaction-bar').classList.remove('hidden');
 
   document.getElementById('reveal-story-counter').textContent = `Story 1 of ${data.totalStories}`;
 
@@ -477,6 +481,10 @@ function onRevealBlock(data) {
 function onRevealEnd(data) {
   Sounds.win();
   launchConfetti();
+
+  // Hide reaction bar
+  document.getElementById('reaction-bar').classList.add('hidden');
+
   document.getElementById('reveal-end').classList.remove('hidden');
   document.getElementById('btn-reveal-next').style.display = 'none';
   document.getElementById('reveal-waiting-msg').style.display = 'none';
@@ -504,6 +512,14 @@ function onRevealEnd(data) {
     `;
     fullContent.appendChild(div);
   });
+
+  // Show awards with a short delay (let confetti play first)
+  const awardData = computeAwards(
+    data.stories,
+    data.reactionCounts || {},
+    data.players || []
+  );
+  setTimeout(() => renderAwards(awardData), 1200);
 }
 
 function updateRevealControls() {
@@ -640,6 +656,146 @@ function launchConfetti() {
   raf = requestAnimationFrame(draw);
 }
 
+// ─── Emoji Reactions ──────────────────────────────────────────────────────────
+document.querySelectorAll('.reaction-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    socket.emit('player:react', { code: state.roomCode, emoji: btn.dataset.emoji });
+    // Brief visual pulse on the button
+    btn.style.transform = 'scale(1.6)';
+    setTimeout(() => { btn.style.transform = ''; }, 180);
+  });
+});
+
+function spawnFloatingReaction(emoji) {
+  const el = document.createElement('span');
+  el.className = 'floating-emoji';
+  el.textContent = emoji;
+  // Random position in the lower 40% of the screen
+  el.style.left = Math.round(8 + Math.random() * 84) + 'vw';
+  el.style.top  = Math.round(50 + Math.random() * 35) + 'vh';
+  document.getElementById('floating-reactions').appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+// ─── Awards ───────────────────────────────────────────────────────────────────
+function computeAwards(stories, reactionCounts, players) {
+  const stats = {};
+
+  // Seed from players array first
+  for (const p of players) {
+    stats[p.id] = { name: p.name, wordCount: 0 };
+  }
+
+  // Fill word counts from blocks (also catches players who left)
+  for (const story of stories) {
+    for (const block of story.blocks) {
+      if (!stats[block.authorId]) {
+        stats[block.authorId] = { name: block.authorName, wordCount: 0 };
+      }
+      stats[block.authorId].wordCount += block.text.trim().split(/\s+/).filter(Boolean).length;
+    }
+  }
+
+  const playerIds = Object.keys(stats);
+  if (playerIds.length === 0) return [];
+  const awards = {};
+
+  // Word count awards (only meaningful with 2+ players)
+  if (playerIds.length > 1) {
+    const wordCounts = playerIds.map(id => stats[id].wordCount);
+    const maxWords = Math.max(...wordCounts);
+    const minWords = Math.min(...wordCounts);
+
+    const novelists = playerIds.filter(id => stats[id].wordCount === maxWords);
+    if (novelists.length === 1) {
+      awards[novelists[0]] = { emoji: '📚', title: 'The Novelist', desc: 'Most words written' };
+    }
+
+    const minimalists = playerIds.filter(id => stats[id].wordCount === minWords);
+    if (minimalists.length === 1 && !awards[minimalists[0]]) {
+      awards[minimalists[0]] = { emoji: '🤏', title: 'The Minimalist', desc: 'Fewest words written' };
+    }
+  }
+
+  // Per-emoji awards
+  const emojiAwards = [
+    { emoji: '😂', title: 'The Comedian',   desc: 'Most laughs earned'    },
+    { emoji: '🔥', title: 'On Fire',         desc: 'Most 🔥 reactions'     },
+    { emoji: '😱', title: 'Plot Twister',    desc: 'Most shocking moments' },
+    { emoji: '❤️', title: 'Most Loved',      desc: 'Most ❤️ reactions'     },
+    { emoji: '💀', title: 'The Villain',     desc: 'Most 💀 reactions'     },
+    { emoji: '😢', title: 'The Tearjerker',  desc: 'Most tears shed'       },
+    { emoji: '🙈', title: 'Too Much!',       desc: 'Most 🙈 reactions'     },
+  ];
+
+  for (const { emoji, title, desc } of emojiAwards) {
+    const counts = playerIds.map(id => ({
+      id, count: (reactionCounts[id] && reactionCounts[id][emoji]) || 0,
+    }));
+    const maxCount = Math.max(...counts.map(c => c.count));
+    if (maxCount > 0) {
+      const winners = counts.filter(c => c.count === maxCount);
+      if (winners.length === 1 && !awards[winners[0].id]) {
+        awards[winners[0].id] = { emoji, title, desc };
+      }
+    }
+  }
+
+  // Overall reaction crown (if not already awarded)
+  const totals = playerIds.map(id => ({
+    id,
+    total: Object.values(reactionCounts[id] || {}).reduce((a, b) => a + b, 0),
+  }));
+  const maxTotal = Math.max(...totals.map(t => t.total));
+  if (maxTotal > 0) {
+    const crowdPleasers = totals.filter(t => t.total === maxTotal);
+    if (crowdPleasers.length === 1 && !awards[crowdPleasers[0].id]) {
+      awards[crowdPleasers[0].id] = { emoji: '🏆', title: 'MVP', desc: 'Most reactions overall' };
+    }
+  }
+
+  // Consolation awards for anyone without one
+  const consolations = [
+    { emoji: '✍️', title: 'Showed Up',      desc: 'Participated in the madness' },
+    { emoji: '🥔', title: 'Just a Potato',  desc: 'Came, wrote, survived'       },
+    { emoji: '🎲', title: 'Wild Card',       desc: 'Unpredictable as always'     },
+    { emoji: '👀', title: 'Silent Witness',  desc: 'Watched the chaos unfold'    },
+  ];
+  let ci = 0;
+  for (const id of playerIds) {
+    if (!awards[id]) awards[id] = consolations[ci++ % consolations.length];
+  }
+
+  return playerIds.map(id => ({ id, name: stats[id].name, award: awards[id] }));
+}
+
+function renderAwards(awardData) {
+  if (!awardData || awardData.length === 0) return;
+
+  const section = document.getElementById('awards-section');
+  const grid    = document.getElementById('awards-grid');
+  grid.innerHTML = '';
+
+  awardData.forEach(({ name, award }) => {
+    const card = document.createElement('div');
+    card.className = 'award-card';
+    card.innerHTML = `
+      <span class="award-emoji">${award.emoji}</span>
+      <span class="award-title">${escHtml(award.title)}</span>
+      <span class="award-player">${escHtml(name)}</span>
+    `;
+    grid.appendChild(card);
+  });
+
+  section.classList.remove('hidden');
+
+  // Stagger the cards in
+  const cards = grid.querySelectorAll('.award-card');
+  cards.forEach((card, i) => {
+    setTimeout(() => card.classList.add('visible'), i * 140);
+  });
+}
+
 // ─── Socket Events ────────────────────────────────────────────────────────────
 socket.on('room:joined', ({ room, playerId, isHost }) => {
   state.playerId = playerId;
@@ -724,6 +880,10 @@ socket.on('reveal:block', (data) => {
 
 socket.on('reveal:end', (data) => {
   onRevealEnd(data);
+});
+
+socket.on('reaction:broadcast', ({ emoji }) => {
+  spawnFloatingReaction(emoji);
 });
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
