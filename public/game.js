@@ -234,7 +234,7 @@ function renderLobby(room) {
 
 // ─── Story Creation ───────────────────────────────────────────────────────────
 function submitAnchorsAuto() {
-  const settingEl = document.getElementById('anchor-setting');
+  const settingEl  = document.getElementById('anchor-setting');
   const subjectsEl = document.getElementById('anchor-subjects');
   if (!settingEl.value.trim()) {
     settingEl.value = SETTING_PRESETS[Math.floor(Math.random() * SETTING_PRESETS.length)];
@@ -242,6 +242,9 @@ function submitAnchorsAuto() {
   if (!subjectsEl.value.trim()) {
     subjectsEl.value = SUBJECT_PRESETS[Math.floor(Math.random() * SUBJECT_PRESETS.length)];
   }
+  // Timer forced both to presets — bypass the "don't be lazy" check
+  settingEl.dataset.presetFilled  = '';
+  subjectsEl.dataset.presetFilled = '';
   document.getElementById('btn-submit-anchors').click();
 }
 
@@ -249,8 +252,12 @@ function initStoryCreation() {
   renderPresets('setting-presets', SETTING_PRESETS, 'anchor-setting');
   renderPresets('subject-presets', SUBJECT_PRESETS, 'anchor-subjects');
 
-  document.getElementById('anchor-setting').value = '';
-  document.getElementById('anchor-subjects').value = '';
+  const settingEl  = document.getElementById('anchor-setting');
+  const subjectsEl = document.getElementById('anchor-subjects');
+  settingEl.value  = '';
+  subjectsEl.value = '';
+  settingEl.dataset.presetFilled  = '';
+  subjectsEl.dataset.presetFilled = '';
   document.getElementById('btn-submit-anchors').disabled = false;
   document.getElementById('creation-waiting').classList.add('hidden');
   document.getElementById('creation-waiting').textContent = '';
@@ -275,17 +282,34 @@ function renderPresets(containerId, presets, targetInputId) {
     btn.className = 'preset-btn';
     btn.textContent = text;
     btn.addEventListener('click', () => {
-      document.getElementById(targetInputId).value = text;
+      const input = document.getElementById(targetInputId);
+      input.value = text;
+      input.dataset.presetFilled = '1';
     });
     container.appendChild(btn);
   });
 }
 
+// Clear the preset flag whenever the player types manually
+document.getElementById('anchor-setting').addEventListener('input', function () {
+  this.dataset.presetFilled = '';
+});
+document.getElementById('anchor-subjects').addEventListener('input', function () {
+  this.dataset.presetFilled = '';
+});
+
 document.getElementById('btn-submit-anchors').addEventListener('click', () => {
-  const setting = document.getElementById('anchor-setting').value.trim();
-  const subjects = document.getElementById('anchor-subjects').value.trim();
-  if (!setting) return alert('Please enter a setting.');
+  const settingEl  = document.getElementById('anchor-setting');
+  const subjectsEl = document.getElementById('anchor-subjects');
+  const setting  = settingEl.value.trim();
+  const subjects = subjectsEl.value.trim();
+  if (!setting)  return alert('Please enter a setting.');
   if (!subjects) return alert('Please enter subject(s).');
+
+  // Block if both fields were filled from presets — at least one should be original
+  if (settingEl.dataset.presetFilled && subjectsEl.dataset.presetFilled) {
+    return alert("Don't be lazy — write at least one of these yourself! 🥔");
+  }
 
   clearTimer();
   document.getElementById('btn-submit-anchors').disabled = true;
@@ -834,7 +858,14 @@ socket.on('kicked', () => {
 socket.on('promoted:host', () => {
   state.isHost = true;
   alert('You are now the host!');
-  if (state.room) renderLobby(state.room);
+  // Only update the UI for the screen we're currently on — never redirect mid-game
+  const activeId = (document.querySelector('.screen.active') || {}).id;
+  if (activeId === 'screen-lobby') {
+    if (state.room) renderLobby(state.room);
+  } else if (activeId === 'screen-reveal') {
+    updateRevealControls();
+  }
+  // During writing phase the host has no special controls, so no action needed
 });
 
 socket.on('phase:story-creation', ({ room }) => {

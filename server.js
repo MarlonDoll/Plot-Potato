@@ -315,10 +315,23 @@ function startWritingRound(room) {
   room.phase = 'writing';
   room.writingSubmissions = new Set();
 
+  // On round 0: align stories[] to match players[] order so each person
+  // writes their own story first.  Also drop orphan stories (from players
+  // who disconnected before the writing phase started).
+  if (room.currentRound === 0) {
+    room.stories = room.stories.filter(s => room.players.some(p => p.id === s.authorId));
+    room.stories.sort((a, b) => {
+      const ai = room.players.findIndex(p => p.id === a.authorId);
+      const bi = room.players.findIndex(p => p.id === b.authorId);
+      return ai - bi;
+    });
+  }
+
   // Build per-player assignments
   const assignments = room.players.map((player, playerIndex) => {
     const storyIndex = getAssignedStoryIndex(playerIndex, room.currentRound, room.players.length);
     const story = room.stories[storyIndex];
+    if (!story) return null;   // safety guard — shouldn't occur after sort above
     const previousBlock = [...story.blocks].reverse().find(b => b.text !== '…') ?? null;
     return {
       playerId: player.id,
@@ -327,7 +340,7 @@ function startWritingRound(room) {
       previousBlock: previousBlock ? { text: previousBlock.text, authorName: previousBlock.authorName } : null,
       isFirstBlock: story.blocks.length === 0,
     };
-  });
+  }).filter(Boolean);
 
   // Send each player their own assignment
   for (const assignment of assignments) {
